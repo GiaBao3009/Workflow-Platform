@@ -1,0 +1,150 @@
+.admin-dashboard {
+  padding: 32px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+.admin-header {
+  margin-bottom: 32px;
+}
+
+.admin-header h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.admin-header p {
+  color: #8b92b8;
+  font-size: 16px;
+}
+
+.admin-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.admin-stat-card {
+  background: #151b35;
+  border: 1px solid #2a3350;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  transition: all 0.3s ease;
+}
+
+.admin-stat-card:hover {
+  border-color: #4facfe;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(79, 172, 254, 0.15);
+}
+
+.stat-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #8b92b8;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-size: 32px;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 8px;
+}
+
+.stat-change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.stat-change.positive {
+  color: #43e97b;
+}
+
+.stat-change.negative {
+  color: #f5576c;
+}
+
+.admin-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.admin-chart-card {
+  background: #151b35;
+  border: 1px solid #2a3350;
+  border-radius: 16px;
+  padding: 24px;
+}
+
+.chart-header {
+  margin-bottom: 24px;
+}
+
+.chart-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.chart-header p {
+  font-size: 13px;
+  color: #8b92b8;
+}
+
+.admin-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  font-size: 18px;
+  color: #8b92b8;
+}
+
+@media (max-width: 768px) {
+  .admin-dashboard {
+    padding: 20px;
+  }
+  
+  .admin-stats-grid,
+  .admin-charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  .admin-header h1 {
+    font-size: 24px;
+  }
+}

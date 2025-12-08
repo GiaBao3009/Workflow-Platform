@@ -1,0 +1,454 @@
+.workflow-canvas {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg-secondary, linear-gradient(135deg, #F8FAFC 0%, #EEF2FF 100%));
+  transition: background-color 0.3s ease;
+}
+
+.canvas-header {
+  background: var(--bg-elevated, white);
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-color, var(--border));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.3s ease;
+}
+
+.canvas-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.canvas-header h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Workflow name edit */
+.workflow-name-display {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 6px;
+  margin: 0;
+  transition: all 0.2s ease;
+}
+
+.workflow-name-display:hover {
+  background: var(--bg-tertiary, #f1f5f9);
+}
+
+.workflow-name-display .edit-icon {
+  font-size: 14px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.workflow-name-display:hover .edit-icon {
+  opacity: 1;
+}
+
+.workflow-name-edit {
+  display: inline-flex;
+  align-items: center;
+}
+
+.workflow-name-input {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #1e293b);
+  border: 2px solid var(--brand-primary, #6366f1);
+  border-radius: 6px;
+  padding: 4px 12px;
+  background: var(--bg-elevated, white);
+  outline: none;
+  min-width: 200px;
+}
+
+.workflow-name-input:focus {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.canvas-header h2 .workflow-icon {
+  width: 36px;
+  height: 36px;
+  background: var(--primary-gradient);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+}
+
+.workflow-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--text-muted);
+  padding: 6px 12px;
+  background: var(--bg-main);
+  border-radius: var(--radius-full);
+}
+
+.workflow-status .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.workflow-status.draft .dot { background: var(--warning); }
+.workflow-status.published .dot { 
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+
+.canvas-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.canvas-main {
+  flex: 1;
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.canvas-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.canvas-right {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  animation: slideUp var(--transition-normal);
+}
+
+.right-panel-tabs {
+  display: flex;
+  background: white;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.tab-button {
+  flex: 1;
+  padding: 14px 16px;
+  background: var(--bg-elevated, white);
+  border: none;
+  border-right: 1px solid var(--border, var(--border-color));
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--btn-secondary-text, var(--text-secondary));
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+}
+
+.tab-button:last-child {
+  border-right: none;
+}
+
+.tab-button:hover {
+  background: var(--bg-tertiary, var(--bg-main));
+  color: var(--text-primary);
+}
+
+.tab-button.active {
+  background: var(--brand-primary, var(--primary));
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.tab-button.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--primary-dark);
+}
+
+.canvas-right > :last-child {
+  flex: 1;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+.canvas-toolbar {
+  background: var(--bg-elevated, white);
+  border: 1px solid var(--border-color, var(--border));
+  border-radius: var(--radius-lg);
+  padding: 14px 18px;
+  box-shadow: var(--shadow-sm);
+  transition: background-color 0.3s ease;
+}
+
+.node-palette h3 {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 14px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-palette h3::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.palette-items {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.palette-item {
+  padding: 10px 16px;
+  background: var(--bg-elevated, white);
+  border: 2px solid var(--border-color, var(--border));
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: grab;
+  transition: all var(--transition-normal);
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.palette-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary);
+  transform: scaleY(0);
+  transition: transform var(--transition-fast);
+}
+
+.palette-item:active {
+  cursor: grabbing;
+  transform: scale(0.98);
+}
+
+.palette-item:hover {
+  border-color: var(--brand-primary, var(--primary));
+  background: var(--bg-elevated, white);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+.palette-item:hover::before {
+  transform: scaleY(1);
+}
+
+.palette-item .icon {
+  font-size: 16px;
+}
+
+.canvas-flow {
+  flex: 1;
+  position: relative;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: var(--bg-elevated, white);
+  border: 1px solid var(--border-color, var(--border));
+  box-shadow: var(--shadow-md);
+  transition: background-color 0.3s ease;
+}
+
+.react-flow__node {
+  background: var(--bg-elevated, white);
+  border: 2px solid var(--brand-primary, var(--primary));
+  border-radius: var(--radius-lg);
+  padding: 12px;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: all var(--transition-normal);
+}
+
+.react-flow__node:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.react-flow__node-input {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+}
+
+/* Connection handles - always visible and interactive */
+.react-flow__handle {
+  width: 14px;
+  height: 14px;
+  background: var(--primary);
+  border: 3px solid white;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-fast);
+}
+
+.react-flow__handle:hover {
+  width: 18px;
+  height: 18px;
+  background: var(--primary-dark);
+  box-shadow: var(--shadow-glow);
+  transform: scale(1.1);
+}
+
+.react-flow__handle-connecting {
+  background: var(--success);
+  animation: handlePulse 1s infinite;
+}
+
+.react-flow__handle-valid {
+  background: var(--success);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.3);
+}
+
+@keyframes handlePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  }
+  50% {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+}
+
+/* Edge styling */
+.react-flow__edge-path {
+  stroke: var(--primary);
+  stroke-width: 2;
+  transition: all var(--transition-fast);
+}
+
+.react-flow__edge:hover .react-flow__edge-path {
+  stroke-width: 3;
+  stroke: var(--primary-dark);
+  filter: drop-shadow(0 2px 4px rgba(99, 102, 241, 0.3));
+}
+
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke: var(--success);
+  stroke-width: 3;
+}
+
+/* Edge label */
+.react-flow__edge-text {
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--text-secondary);
+}
+
+/* Connection line when dragging */
+.react-flow__connectionline {
+  stroke: var(--success);
+  stroke-width: 2;
+  stroke-dasharray: 5, 5;
+  animation: dash 0.5s linear infinite;
+}
+
+@keyframes dash {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
+/* Node selection */
+.react-flow__node.selected {
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3), var(--shadow-lg);
+}
+
+/* Validating connection target */
+.react-flow__node.valid-target {
+  border-color: var(--success);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+}
+
+/* React Flow Controls */
+.react-flow__controls {
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.react-flow__controls button {
+  background: white;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  width: 28px;
+  height: 28px;
+  transition: all var(--transition-fast);
+}
+
+.react-flow__controls button:hover {
+  background: var(--primary);
+}
+
+.react-flow__controls button:hover svg {
+  fill: white;
+}
+
+.react-flow__controls button:last-child {
+  border-bottom: none;
+}
+
+/* Mini map */
+.react-flow__minimap {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+/* Background */
+.react-flow__background {
+  background-color: #FAFBFC;
+}
+
+/* Selection box */
+.react-flow__selection {
+  background: rgba(99, 102, 241, 0.1);
+  border: 1px dashed var(--primary);
+}

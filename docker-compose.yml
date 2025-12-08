@@ -1,0 +1,111 @@
+services:
+  # ==================== TEMPORAL INFRASTRUCTURE ====================
+  
+  # 1. Database cho Temporal (PostgreSQL)
+  postgresql:
+    container_name: temporal-postgresql
+    image: postgres:13
+    environment:
+      - POSTGRES_USER=temporal
+      - POSTGRES_PASSWORD=temporal
+    ports:
+      - "5432:5432"
+    networks:
+      - temporal-network
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  # 2. Công cụ tìm kiếm (Elasticsearch) - Giúp bạn search workflow theo trạng thái
+  elasticsearch:
+    container_name: temporal-elasticsearch
+    image: elasticsearch:7.16.2
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    networks:
+      - temporal-network
+
+  # 3. Temporal Server (Bộ não chính)
+  temporal:
+    container_name: temporal-server
+    image: temporalio/auto-setup:latest
+    ports:
+      - "7233:7233" # Port để Worker và Code kết nối vào
+      - "8233:8233" # Port HTTP
+    environment:
+      - DB=postgres12
+      - DB_PORT=5432
+      - POSTGRES_USER=temporal
+      - POSTGRES_PWD=temporal
+      - POSTGRES_DB=temporal
+      - POSTGRES_SEEDS=postgresql
+      - ENABLE_ES=true
+      - ES_SEEDS=elasticsearch
+      - ES_VERSION=v7
+    depends_on:
+      - postgresql
+      - elasticsearch
+    networks:
+      - temporal-network
+
+  # 4. Temporal UI (Giao diện quản lý)
+  temporal-ui:
+    container_name: temporal-ui
+    image: temporalio/ui:latest
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    ports:
+      - "8080:8080" # Bạn sẽ truy cập localhost:8080
+    depends_on:
+      - temporal
+    networks:
+      - temporal-network
+
+  # ==================== APPLICATION SERVICES ====================
+
+  # 5. Backend API (Node.js/Express)
+  # Note: Build this locally first with: cd apps/backend-api && npm install && npm run build
+  # Then start with: npm start
+  # backend:
+  #   container_name: backend-api
+  #   build:
+  #     context: ./apps/backend-api
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - NODE_ENV=development
+  #     - PORT=3001
+  #     - MONGODB_URI=${MONGODB_URI}
+  #     - TEMPORAL_ADDRESS=temporal:7233
+  #     - API_URL=http://localhost:3001
+  #   ports:
+  #     - "3001:3001"
+  #   depends_on:
+  #     - temporal
+  #   networks:
+  #     - temporal-network
+
+  # 6. Temporal Worker (Node.js)
+  # Note: Run locally first with: cd hello-temporal && npm install && npm run build && npm run start:worker
+  # worker:
+  #   container_name: temporal-worker
+  #   build:
+  #     context: ./hello-temporal
+  #     dockerfile: Dockerfile
+  #   environment:
+  #     - NODE_ENV=development
+  #     - TEMPORAL_ADDRESS=temporal:7233
+  #     - MONGODB_URI=${MONGODB_URI}
+  #   depends_on:
+  #     - temporal
+  #   networks:
+  #     - temporal-network
+
+networks:
+  temporal-network:
+    driver: bridge
+
+volumes:
+  postgres-data:

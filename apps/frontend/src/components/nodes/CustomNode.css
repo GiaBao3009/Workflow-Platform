@@ -1,0 +1,340 @@
+.custom-node {
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg-elevated, white);
+  border: 2px solid var(--border-color, var(--border));
+  min-width: 220px;
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient accent line on top */
+.custom-node::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--node-color, var(--primary));
+  opacity: 0.8;
+  transition: opacity var(--transition-fast);
+}
+
+.custom-node:hover::before {
+  opacity: 1;
+}
+
+.custom-node.selected {
+  border-color: var(--node-color, var(--primary));
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+.custom-node:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+/* Make connection handles more visible and interactive */
+.custom-node .react-flow__handle {
+  width: 14px;
+  height: 14px;
+  border: 3px solid white;
+  background: var(--node-color, var(--primary));
+  box-shadow: var(--shadow-md);
+  transition: all var(--transition-fast);
+  opacity: 0.9;
+}
+
+.custom-node:hover .react-flow__handle {
+  opacity: 1;
+  width: 16px;
+  height: 16px;
+}
+
+.custom-node .react-flow__handle:hover {
+  width: 20px;
+  height: 20px;
+  background: var(--primary-dark);
+  box-shadow: var(--shadow-glow);
+  cursor: crosshair;
+  transform: scale(1.15);
+}
+
+.node-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-light, var(--border-color));
+}
+
+.node-icon {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: var(--bg-main);
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast);
+}
+
+.custom-node:hover .node-icon {
+  transform: scale(1.1);
+}
+
+.node-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+  letter-spacing: -0.3px;
+}
+
+.node-body {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.node-field {
+  margin-bottom: 6px;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.node-field:last-child {
+  margin-bottom: 0;
+}
+
+.node-field strong {
+  color: var(--text-muted);
+  font-weight: 600;
+  min-width: 55px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.node-field span, .node-field code {
+  color: var(--text-primary);
+  font-weight: 500;
+  word-break: break-all;
+}
+
+/* ==================== NODE TYPE COLORS ==================== */
+
+/* HTTP Node - Blue */
+.http-node {
+  --node-color: #3B82F6;
+  border-color: #3B82F6;
+}
+
+.http-node::before { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+.http-node .node-icon { background: #EFF6FF; }
+
+.http-node.selected {
+  border-color: #3B82F6;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Database Node - Green */
+.database-node {
+  --node-color: #10B981;
+  border-color: #10B981;
+}
+
+.database-node::before { background: linear-gradient(90deg, #10B981, #34D399); }
+.database-node .node-icon { background: #ECFDF5; }
+
+.database-node.selected {
+  border-color: #10B981;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(16, 185, 129, 0.2);
+}
+
+/* Email Node - Amber */
+.email-node {
+  --node-color: #F59E0B;
+  border-color: #F59E0B;
+}
+
+.email-node::before { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+.email-node .node-icon { background: #FFFBEB; }
+
+.email-node.selected {
+  border-color: #F59E0B;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(245, 158, 11, 0.2);
+}
+
+/* Delay Node - Purple */
+.delay-node {
+  --node-color: #8B5CF6;
+  border-color: #8B5CF6;
+}
+
+.delay-node::before { background: linear-gradient(90deg, #8B5CF6, #A78BFA); }
+.delay-node .node-icon { background: #F5F3FF; }
+
+.delay-node.selected {
+  border-color: #8B5CF6;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+/* Conditional Node - Red */
+.conditional-node {
+  --node-color: #EF4444;
+  border-color: #EF4444;
+}
+
+.conditional-node::before { background: linear-gradient(90deg, #EF4444, #F87171); }
+.conditional-node .node-icon { background: #FEF2F2; }
+
+.conditional-node.selected {
+  border-color: #EF4444;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+/* Telegram Node - Telegram Blue */
+.telegram-node {
+  --node-color: #0088CC;
+  border-color: #0088CC;
+}
+
+.telegram-node::before { background: linear-gradient(90deg, #0088CC, #229ED9); }
+.telegram-node .node-icon { background: #E5F6FD; }
+
+.telegram-node.selected {
+  border-color: #0088CC;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(0, 136, 204, 0.2);
+}
+
+/* ChatGPT Node - OpenAI Green */
+.chatgpt-node {
+  --node-color: #10A37F;
+  border-color: #10A37F;
+}
+
+.chatgpt-node::before { background: linear-gradient(90deg, #10A37F, #1A7F64); }
+.chatgpt-node .node-icon { background: #E6F7F2; }
+
+.chatgpt-node.selected {
+  border-color: #10A37F;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(16, 163, 127, 0.2);
+}
+
+/* Gemini Node - Google Blue */
+.gemini-node {
+  --node-color: #4285F4;
+  border-color: #4285F4;
+}
+
+.gemini-node::before { background: linear-gradient(90deg, #4285F4, #8AB4F8); }
+.gemini-node .node-icon { background: #E8F0FE; }
+
+.gemini-node.selected {
+  border-color: #4285F4;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(66, 133, 244, 0.2);
+}
+
+/* Filter Node - Orange */
+.filter-node {
+  --node-color: #F97316;
+  border-color: #F97316;
+}
+
+.filter-node::before { background: linear-gradient(90deg, #F97316, #FB923C); }
+.filter-node .node-icon { background: #FFF7ED; }
+
+.filter-node.selected {
+  border-color: #F97316;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(249, 115, 22, 0.2);
+}
+
+/* Google Sheets Node - Sheets Green */
+.sheets-node {
+  --node-color: #0F9D58;
+  border-color: #0F9D58;
+}
+
+.sheets-node::before { background: linear-gradient(90deg, #0F9D58, #34A853); }
+.sheets-node .node-icon { background: #E6F4EA; }
+
+.sheets-node.selected {
+  border-color: #0F9D58;
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(15, 157, 88, 0.2);
+}
+
+/* Start Node */
+.start-node {
+  --node-color: #6366F1;
+  border-color: #6366F1;
+  background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+  color: white;
+  min-width: 140px;
+  text-align: center;
+}
+
+.start-node::before {
+  display: none;
+}
+
+.start-node .node-header {
+  border-bottom: none;
+  justify-content: center;
+}
+
+.start-node .node-icon {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.start-node .node-title {
+  color: white;
+}
+
+.start-node.selected {
+  box-shadow: var(--shadow-lg), 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+/* ==================== SPECIAL HANDLES ==================== */
+
+/* Conditional Node Pass/Reject handles */
+.conditional-node .react-flow__handle-bottom {
+  width: 12px;
+  height: 12px;
+}
+
+.conditional-node .react-flow__handle[data-handleid="pass"] {
+  background: var(--success);
+  left: 30%;
+}
+
+.conditional-node .react-flow__handle[data-handleid="reject"] {
+  background: var(--danger);
+  left: 70%;
+}
+
+/* Handle labels */
+.handle-label {
+  position: absolute;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.handle-label.pass {
+  color: var(--success);
+  bottom: -18px;
+  left: 25%;
+}
+
+.handle-label.reject {
+  color: var(--danger);
+  bottom: -18px;
+  left: 65%;
+}

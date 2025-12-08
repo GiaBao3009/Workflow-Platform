@@ -1,0 +1,46 @@
+{
+  "name": "workflow-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.0.0",
+    "axios": "^1.6.0",
+    "bcrypt": "^6.0.0",
+    "express-session": "^1.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "lucide-react": "^0.263.1",
+    "passport": "^0.7.0",
+    "passport-github2": "^0.1.12",
+    "passport-google-oauth20": "^2.0.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^7.10.1",
+    "reactflow": "^11.10.0",
+    "recharts": "^2.15.4",
+    "zustand": "^4.4.0"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express-session": "^1.18.2",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/passport": "^1.0.17",
+    "@types/passport-github2": "^1.2.9",
+    "@types/passport-google-oauth20": "^2.0.17",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  }
+}

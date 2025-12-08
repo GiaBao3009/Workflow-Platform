@@ -1,0 +1,96 @@
+.theme-toggle-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  border-radius: 12px;
+  padding: 8px 0;
+  width: 100%;
+}
+
+.theme-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex: 1;
+  padding: 12px 8px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  border-radius: 10px;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.2s ease;
+  position: relative;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.theme-option::before {
+  content: attr(title);
+  display: block;
+  margin-top: 4px;
+}
+
+.theme-option:hover {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.04);
+  color: #6366f1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15);
+}
+
+.theme-option.active {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-color: #6366f1;
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transform: translateY(-2px);
+}
+
+.theme-option.active::after {
+  display: none;
+}
+
+.theme-option svg {
+  transition: transform 0.2s ease;
+  width: 22px;
+  height: 22px;
+}
+
+.theme-option:active svg {
+  transform: scale(0.9);
+}
+
+/* Theme-specific icons animation */
+.theme-option:nth-child(1).active svg {
+  animation: rotate 4s linear infinite;
+}
+
+.theme-option:nth-child(2).active svg {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.theme-option:nth-child(3).active svg {
+  animation: twinkle 1.5s ease-in-out infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes twinkle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}

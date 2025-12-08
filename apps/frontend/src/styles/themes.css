@@ -1,0 +1,890 @@
+/* ============================================
+   Theme System - Light, Dark, Purple
+   ============================================ */
+
+:root {
+  /* Light Theme (Default) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-elevated: #ffffff;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #64748b;
+  --text-tertiary: #94a3b8;
+  
+  /* Button Text - Always high contrast */
+  --btn-primary-text: #ffffff;
+  --btn-secondary-text: #1e293b;
+  --btn-secondary-hover-text: #4f46e5;
+  --btn-ghost-text: #475569;
+  --btn-success-text: #ffffff;
+  --btn-danger-text: #ffffff;
+  
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  
+  --brand-primary: #6366f1;
+  --brand-secondary: #4f46e5;
+  --brand-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-elevated: #1e293b;
+  
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  
+  /* Button Text - High contrast for dark mode */
+  --btn-primary-text: #ffffff;
+  --btn-secondary-text: #f1f5f9;
+  --btn-secondary-hover-text: #a5b4fc;
+  --btn-ghost-text: #e2e8f0;
+  --btn-success-text: #ffffff;
+  --btn-danger-text: #ffffff;
+  
+  --border-color: #334155;
+  --border-light: #475569;
+  
+  --brand-primary: #818cf8;
+  --brand-secondary: #6366f1;
+  --brand-gradient: linear-gradient(135deg, #818cf8 0%, #a78bfa 50%, #c084fc 100%);
+  
+  --success: #34d399;
+  --warning: #fbbf24;
+  --error: #f87171;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+}
+
+/* Purple Theme */
+[data-theme="purple"] {
+  --bg-primary: #faf5ff;
+  --bg-secondary: #f3e8ff;
+  --bg-tertiary: #e9d5ff;
+  --bg-elevated: #ffffff;
+  
+  --text-primary: #581c87;
+  --text-secondary: #7c3aed;
+  --text-tertiary: #a78bfa;
+  
+  /* Button Text - High contrast for purple theme */
+  --btn-primary-text: #ffffff;
+  --btn-secondary-text: #581c87;
+  --btn-secondary-hover-text: #6d28d9;
+  --btn-ghost-text: #6b21a8;
+  --btn-success-text: #ffffff;
+  --btn-danger-text: #ffffff;
+  
+  --border-color: #e9d5ff;
+  --border-light: #f3e8ff;
+  
+  --brand-primary: #8b5cf6;
+  --brand-secondary: #7c3aed;
+  --brand-gradient: linear-gradient(135deg, #8b5cf6 0%, #a855f7 50%, #c026d3 100%);
+  
+  --success: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(139, 92, 246, 0.1);
+  --shadow-md: 0 4px 6px -1px rgba(139, 92, 246, 0.15);
+  --shadow-lg: 0 10px 15px -3px rgba(139, 92, 246, 0.2);
+  --shadow-xl: 0 20px 25px -5px rgba(139, 92, 246, 0.25);
+}
+
+/* Smooth theme transition */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* ============================================
+   Dark Theme - Component Overrides
+   ============================================ */
+
+/* Sidebar Dark */
+[data-theme="dark"] .sidebar {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .sidebar-tabs {
+  background: var(--bg-primary);
+}
+
+[data-theme="dark"] .sidebar-tabs .tab:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+[data-theme="dark"] .sidebar-tabs .tab.active {
+  background: var(--bg-secondary);
+  color: var(--brand-primary);
+}
+
+[data-theme="dark"] .workflow-item {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .workflow-item:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border-light);
+}
+
+/* Header Dark */
+[data-theme="dark"] .header {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .btn-user {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .btn-user:hover {
+  background: var(--bg-elevated);
+  border-color: var(--brand-primary);
+}
+
+/* Canvas Dark */
+[data-theme="dark"] .workflow-canvas {
+  background: linear-gradient(135deg, var(--bg-primary) 0%, #1a1f35 100%);
+}
+
+[data-theme="dark"] .canvas-header {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .workflow-name-display {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .workflow-name-display:hover {
+  background: var(--bg-tertiary);
+}
+
+[data-theme="dark"] .workflow-name-input {
+  background: var(--bg-tertiary);
+  border-color: var(--brand-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .canvas-toolbar,
+[data-theme="dark"] .node-palette {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .palette-item {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .palette-item:hover {
+  background: var(--bg-elevated);
+  border-color: var(--brand-primary);
+}
+
+[data-theme="dark"] .canvas-flow {
+  background: var(--bg-primary);
+  border-color: var(--border-color);
+}
+
+/* React Flow Dark */
+[data-theme="dark"] .react-flow__background {
+  background: var(--bg-primary) !important;
+}
+
+[data-theme="dark"] .react-flow__node {
+  background: var(--bg-secondary);
+  border-color: var(--brand-primary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .react-flow__edge-path {
+  stroke: var(--brand-primary);
+}
+
+[data-theme="dark"] .react-flow__controls {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .react-flow__controls button {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .react-flow__controls button:hover {
+  background: var(--bg-elevated);
+}
+
+[data-theme="dark"] .react-flow__minimap {
+  background: var(--bg-secondary);
+}
+
+/* Right Panel Dark (ExecutionHistory, Schedules, Webhooks) */
+[data-theme="dark"] .execution-history,
+[data-theme="dark"] .schedule-manager,
+[data-theme="dark"] .webhook-manager {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .history-header,
+[data-theme="dark"] .schedule-header,
+[data-theme="dark"] .webhook-header {
+  background: linear-gradient(135deg, rgba(129, 140, 248, 0.1) 0%, transparent 100%);
+}
+
+[data-theme="dark"] .run-item {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .run-item:hover {
+  background: var(--bg-elevated);
+  border-color: var(--brand-primary);
+}
+
+/* Tab buttons Dark */
+[data-theme="dark"] .tab-button {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .tab-button:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .tab-button.active {
+  background: var(--brand-primary);
+  color: #ffffff;
+}
+
+/* Node Config Panel Dark */
+[data-theme="dark"] .config-panel {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .config-header {
+  background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .config-body {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .form-group label {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-group input,
+[data-theme="dark"] .form-group textarea,
+[data-theme="dark"] .form-group select {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .close-btn {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+/* Cards/Modal Dark */
+[data-theme="dark"] .card,
+[data-theme="dark"] .modal-content {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+/* Custom Nodes Dark */
+[data-theme="dark"] .custom-node {
+  background: var(--bg-secondary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .custom-node:hover {
+  border-color: var(--brand-primary);
+}
+
+[data-theme="dark"] .node-content {
+  color: var(--text-primary);
+}
+
+/* ============================================
+   Purple Theme - Enhanced Intensity
+   ============================================ */
+
+/* Sidebar Purple */
+[data-theme="purple"] .sidebar {
+  background: linear-gradient(180deg, #faf5ff 0%, #f3e8ff 100%);
+  border-color: var(--border-color);
+}
+
+[data-theme="purple"] .sidebar-tabs {
+  background: linear-gradient(180deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+[data-theme="purple"] .sidebar-tabs .tab.active {
+  background: #ffffff;
+  color: var(--brand-primary);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+}
+
+[data-theme="purple"] .workflow-item {
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(139, 92, 246, 0.1);
+}
+
+[data-theme="purple"] .workflow-item:hover {
+  background: #ffffff;
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.15);
+}
+
+[data-theme="purple"] .workflow-item.active {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+/* Header Purple */
+[data-theme="purple"] .header {
+  background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+  border-color: var(--border-color);
+}
+
+[data-theme="purple"] .header::before {
+  background: var(--brand-gradient);
+}
+
+[data-theme="purple"] .btn-user {
+  background: #ffffff;
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="purple"] .btn-user:hover {
+  border-color: var(--brand-primary);
+  background: #faf5ff;
+}
+
+/* Canvas Purple */
+[data-theme="purple"] .workflow-canvas {
+  background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 50%, #ede9fe 100%);
+}
+
+[data-theme="purple"] .canvas-header {
+  background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+  border-color: var(--border-color);
+}
+
+[data-theme="purple"] .canvas-toolbar,
+[data-theme="purple"] .node-palette {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(139, 92, 246, 0.15);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.08);
+}
+
+[data-theme="purple"] .palette-item {
+  background: #ffffff;
+  border-color: rgba(139, 92, 246, 0.15);
+}
+
+[data-theme="purple"] .palette-item:hover {
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="purple"] .canvas-flow {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(139, 92, 246, 0.15);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.1);
+}
+
+/* React Flow Purple */
+[data-theme="purple"] .react-flow__background {
+  background: rgba(250, 245, 255, 0.5) !important;
+}
+
+[data-theme="purple"] .react-flow__edge-path {
+  stroke: var(--brand-primary);
+}
+
+[data-theme="purple"] .react-flow__controls {
+  background: #ffffff;
+  border-color: rgba(139, 92, 246, 0.15);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+}
+
+[data-theme="purple"] .react-flow__controls button:hover {
+  background: #f3e8ff;
+}
+
+/* Right Panel Purple */
+[data-theme="purple"] .execution-history,
+[data-theme="purple"] .schedule-manager,
+[data-theme="purple"] .webhook-manager {
+  background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+  border-color: rgba(139, 92, 246, 0.15);
+}
+
+[data-theme="purple"] .history-header,
+[data-theme="purple"] .schedule-header,
+[data-theme="purple"] .webhook-header {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, transparent 100%);
+}
+
+[data-theme="purple"] .run-item {
+  background: #ffffff;
+  border-color: rgba(139, 92, 246, 0.1);
+}
+
+[data-theme="purple"] .run-item:hover {
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.12);
+}
+
+/* Tab buttons Purple */
+[data-theme="purple"] .tab-button {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(139, 92, 246, 0.1);
+}
+
+[data-theme="purple"] .tab-button:hover {
+  background: #f3e8ff;
+}
+
+[data-theme="purple"] .tab-button.active {
+  background: var(--brand-gradient);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+/* Node Config Panel Purple */
+[data-theme="purple"] .config-panel {
+  background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+}
+
+[data-theme="purple"] .config-header {
+  background: linear-gradient(135deg, #f3e8ff 0%, #ffffff 100%);
+}
+
+/* Cards/Modal Purple */
+[data-theme="purple"] .card,
+[data-theme="purple"] .modal-content {
+  background: #ffffff;
+  border-color: rgba(139, 92, 246, 0.12);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.1);
+}
+
+/* Custom Nodes Purple */
+[data-theme="purple"] .custom-node {
+  background: linear-gradient(180deg, #fefcff 0%, #faf5ff 100%);
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1);
+}
+
+[data-theme="purple"] .custom-node:hover {
+  border-color: var(--brand-primary);
+  box-shadow: 0 8px 20px rgba(139, 92, 246, 0.2);
+}
+
+[data-theme="purple"] .custom-node .node-icon {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+/* ============================================
+   Dark Theme - Additional Fixes
+   ============================================ */
+
+/* Library/Template Items Dark */
+[data-theme="dark"] .template-item {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .template-item:hover {
+  background: var(--bg-elevated);
+  border-color: var(--brand-primary);
+}
+
+[data-theme="dark"] .template-content h4 {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .template-content p {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .template-icon {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .template-tags .tag {
+  background: rgba(129, 140, 248, 0.2);
+  color: var(--brand-primary);
+}
+
+[data-theme="dark"] .template-tags .tag:nth-child(2) {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+[data-theme="dark"] .template-tags .tag:nth-child(3) {
+  background: rgba(52, 211, 153, 0.2);
+  color: #34d399;
+}
+
+[data-theme="dark"] .library-title,
+[data-theme="dark"] .library-subtitle {
+  color: var(--text-primary);
+}
+
+/* Guide Modal Dark */
+[data-theme="dark"] .guide-modal {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .guide-content {
+  background: var(--bg-secondary);
+}
+
+[data-theme="dark"] .guide-section h3 {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .guide-section p,
+[data-theme="dark"] .guide-section ol,
+[data-theme="dark"] .guide-section ul,
+[data-theme="dark"] .guide-section li {
+  color: var(--text-secondary);
+}
+
+[data-theme="dark"] .guide-section li strong {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .guide-section code {
+  background: var(--bg-tertiary);
+  color: var(--brand-primary);
+}
+
+[data-theme="dark"] .node-type-item {
+  background: var(--bg-tertiary);
+  border-color: var(--border-color);
+}
+
+[data-theme="dark"] .node-type-item:hover {
+  border-color: var(--brand-primary);
+  background: rgba(129, 140, 248, 0.1);
+}
+
+[data-theme="dark"] .node-type-item strong {
+  color: var(--text-primary);
+}
+
+[data-theme="dark"] .node-type-item p {
+  color: var(--text-secondary);
+}
+
+/* Minimap Dark */
+[data-theme="dark"] .react-flow__minimap {
+  background: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+[data-theme="dark"] .react-flow__minimap-mask {
+  fill: rgba(129, 140, 248, 0.15) !important;
+}
+
+/* Controls Dark */
+[data-theme="dark"] .react-flow__controls {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 8px !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+[data-theme="dark"] .react-flow__controls button {
+  background: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-primary) !important;
+}
+
+[data-theme="dark"] .react-flow__controls button:hover {
+  background: var(--bg-elevated) !important;
+}
+
+[data-theme="dark"] .react-flow__controls button svg {
+  fill: var(--text-primary) !important;
+}
+
+/* ============================================
+   Purple Theme - Additional Fixes
+   ============================================ */
+
+/* Library/Template Items Purple */
+[data-theme="purple"] .template-item {
+  background: linear-gradient(180deg, #ffffff 0%, #fefcff 100%);
+  border-color: rgba(139, 92, 246, 0.15);
+}
+
+[data-theme="purple"] .template-item:hover {
+  border-color: var(--brand-primary);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.15);
+}
+
+[data-theme="purple"] .template-icon {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%);
+}
+
+[data-theme="purple"] .template-tags .tag {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--brand-secondary);
+}
+
+/* Guide Modal Purple */
+[data-theme="purple"] .guide-modal {
+  background: linear-gradient(180deg, #ffffff 0%, #faf5ff 100%);
+}
+
+[data-theme="purple"] .guide-section h3 {
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+[data-theme="purple"] .guide-section code {
+  background: #f3e8ff;
+  color: var(--brand-secondary);
+}
+
+[data-theme="purple"] .node-type-item {
+  background: linear-gradient(135deg, #fefcff 0%, #faf5ff 100%);
+  border-color: rgba(139, 92, 246, 0.12);
+}
+
+[data-theme="purple"] .node-type-item:hover {
+  border-color: var(--brand-primary);
+  background: linear-gradient(135deg, #f3e8ff 0%, #ede9fe 100%);
+}
+
+/* Minimap Purple */
+[data-theme="purple"] .react-flow__minimap {
+  background: linear-gradient(135deg, #fefcff 0%, #faf5ff 100%) !important;
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 8px;
+}
+
+[data-theme="purple"] .react-flow__minimap-mask {
+  fill: rgba(139, 92, 246, 0.12) !important;
+}
+
+/* Controls Purple */
+[data-theme="purple"] .react-flow__controls {
+  background: #ffffff !important;
+  border: 1px solid rgba(139, 92, 246, 0.15) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.1) !important;
+}
+
+[data-theme="purple"] .react-flow__controls button {
+  background: #fefcff !important;
+  border-color: rgba(139, 92, 246, 0.1) !important;
+}
+
+[data-theme="purple"] .react-flow__controls button:hover {
+  background: #f3e8ff !important;
+}
+
+[data-theme="purple"] .react-flow__controls button svg {
+  fill: var(--brand-secondary) !important;
+}
+
+/* ============================================
+   Light Theme - Make it distinct from Purple
+   ============================================ */
+
+/* Sidebar Light - Remove purple, use neutral */
+[data-theme="light"] .sidebar {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .sidebar-tabs {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .sidebar-tabs .tab.active {
+  background: #ffffff;
+  color: #6366f1;
+}
+
+[data-theme="light"] .workflow-item {
+  background: #f8fafc;
+}
+
+[data-theme="light"] .workflow-item:hover {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+/* Header Light */
+[data-theme="light"] .header {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+/* Canvas Light */
+[data-theme="light"] .workflow-canvas {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+}
+
+[data-theme="light"] .canvas-header {
+  background: #ffffff;
+}
+
+[data-theme="light"] .canvas-toolbar,
+[data-theme="light"] .node-palette {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .palette-item {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .palette-item:hover {
+  background: #ffffff;
+  border-color: #6366f1;
+}
+
+[data-theme="light"] .canvas-flow {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+/* Right Panel Light */
+[data-theme="light"] .execution-history,
+[data-theme="light"] .schedule-manager,
+[data-theme="light"] .webhook-manager {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .history-header,
+[data-theme="light"] .schedule-header,
+[data-theme="light"] .webhook-header {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.03) 0%, transparent 100%);
+}
+
+[data-theme="light"] .run-item {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .run-item:hover {
+  background: #ffffff;
+  border-color: #6366f1;
+}
+
+/* Tab buttons Light */
+[data-theme="light"] .tab-button {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .tab-button:hover {
+  background: #f1f5f9;
+}
+
+[data-theme="light"] .tab-button.active {
+  background: #6366f1;
+  color: #ffffff;
+}
+
+/* Template/Library Light */
+[data-theme="light"] .template-item {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .template-item:hover {
+  background: #ffffff;
+  border-color: #6366f1;
+}
+
+[data-theme="light"] .template-icon {
+  background: #f1f5f9;
+}
+
+/* Controls Light */
+[data-theme="light"] .react-flow__controls {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+}
+
+[data-theme="light"] .react-flow__controls button {
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .react-flow__controls button:hover {
+  background: #f1f5f9 !important;
+}
+
+/* Minimap Light */
+[data-theme="light"] .react-flow__minimap {
+  background: #f8fafc !important;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+/* Custom Nodes Light */
+[data-theme="light"] .custom-node {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .custom-node:hover {
+  border-color: #6366f1;
+}

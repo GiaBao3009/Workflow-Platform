@@ -1,0 +1,43 @@
+{
+  "name": "workflow-temporal-worker",
+  "version": "1.0.0",
+  "description": "Workflow Platform Temporal Worker",
+  "main": "dist/worker.js",
+  "scripts": {
+    "dev": "ts-node src/worker.ts",
+    "build": "tsc",
+    "start": "node dist/worker.js",
+    "start:worker": "node dist/worker.js",
+    "start:client": "ts-node src/client.ts",
+    "watch": "tsc --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "workflow",
+    "temporal",
+    "worker"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@google-cloud/text-to-speech": "^6.4.0",
+    "@temporalio/activity": "^1.8.0",
+    "@temporalio/client": "^1.8.0",
+    "@temporalio/common": "^1.8.0",
+    "@temporalio/worker": "^1.8.0",
+    "@temporalio/workflow": "^1.8.0",
+    "@types/nodemailer": "^7.0.4",
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.0",
+    "googleapis": "^166.0.0",
+    "mongodb": "^6.21.0",
+    "mongoose": "^7.0.0",
+    "nodemailer": "^7.0.10",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.0",
+    "typescript": "^5.0.0"
+  }
+}

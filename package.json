@@ -1,0 +1,38 @@
+{
+  "name": "workflow-platform",
+  "version": "1.0.0",
+  "description": "Visual workflow automation platform like n8n",
+  "private": true,
+  "workspaces": [
+    "apps/backend-api",
+    "apps/frontend",
+    "hello-temporal",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspaces",
+    "build": "npm run build --workspaces",
+    "start": "npm start --workspaces",
+    "test": "npm test --workspaces",
+    "docker:build": "docker-compose build",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "docker:ps": "docker-compose ps",
+    "setup": "npm install && npm run build",
+    "clean": "npm run clean --workspaces && rm -rf node_modules"
+  },
+  "keywords": [
+    "workflow",
+    "automation",
+    "temporal",
+    "n8n",
+    "react-flow"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}

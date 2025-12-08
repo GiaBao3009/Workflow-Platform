@@ -1,0 +1,498 @@
+# API Request Examples
+
+## Base URL
+```
+http://localhost:3001
+```
+
+---
+
+## 1️⃣ CREATE USER
+
+**Endpoint:** `POST /api/users`
+
+**Request:**
+```bash
+curl -X POST http://localhost:3001/api/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "john@example.com",
+    "name": "John Doe"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "user": {
+    "_id": "65a1234567890abcdef12345",
+    "email": "john@example.com",
+    "name": "John Doe",
+    "isActive": true,
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+**Notes:**
+- Store `_id` for later use
+- Email must be unique
+
+---
+
+## 2️⃣ CREATE WORKFLOW (Simple HTTP to DB)
+
+**Endpoint:** `POST /api/workflows`
+
+**Request:**
+```bash
+curl -X POST http://localhost:3001/api/workflows \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "65a1234567890abcdef12345",
+    "name": "Fetch and Store Orders",
+    "description": "Get orders from API and save to MongoDB",
+    "reactFlowData": {
+      "nodes": [
+        {
+          "id": "node-1",
+          "type": "ACTION_HTTP_REQUEST",
+          "position": { "x": 0, "y": 0 },
+          "data": {
+            "label": "Fetch Orders",
+            "config": {
+              "url": "https://jsonplaceholder.typicode.com/posts",
+              "method": "GET",
+              "headers": {}
+            }
+          }
+        },
+        {
+          "id": "node-2",
+          "type": "DATABASE_MONGO_WRITE",
+          "position": { "x": 300, "y": 0 },
+          "data": {
+            "label": "Save to Orders",
+            "config": {
+              "collection": "orders",
+              "operation": "insertMany",
+              "data": {}
+            }
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "edge-1",
+          "source": "node-1",
+          "target": "node-2"
+        }
+      ],
+      "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    },
+    "triggerType": "MANUAL"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "workflow": {
+    "_id": "65a1234567890abcdef12346",
+    "name": "Fetch and Store Orders",
+    "status": "draft",
+    "triggerType": "MANUAL",
+    "webhookUrl": null
+  }
+}
+```
+
+---
+
+## 3️⃣ CREATE WORKFLOW (With Webhook)
+
+**Endpoint:** `POST /api/workflows`
+
+**Request:**
+```bash
+curl -X POST http://localhost:3001/api/workflows \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "65a1234567890abcdef12345",
+    "name": "Order Processing Pipeline",
+    "reactFlowData": { /* same as above */ },
+    "triggerType": "WEBHOOK"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "workflow": {
+    "_id": "65a1234567890abcdef12347",
+    "name": "Order Processing Pipeline",
+    "status": "draft",
+    "triggerType": "WEBHOOK",
+    "webhookUrl": "http://localhost:3001/webhooks/a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+  }
+}
+```
+
+**Usage:**
+```bash
+# Trigger the webhook
+curl -X POST http://localhost:3001/webhooks/a1b2c3d4-e5f6-7890-abcd-ef1234567890 \
+  -H "Content-Type: application/json" \
+  -d '{"orderId": "123", "amount": 100}'
+```
+
+---
+
+## 4️⃣ CREATE WORKFLOW (Scheduled/CRON)
+
+**Endpoint:** `POST /api/workflows`
+
+**Request:**
+```bash
+curl -X POST http://localhost:3001/api/workflows \
+  -H "Content-Type: application/json" \
+  -d '{
+    "userId": "65a1234567890abcdef12345",
+    "name": "Daily Report Generation",
+    "reactFlowData": { /* same as above */ },
+    "triggerType": "CRON",
+    "cronExpression": "0 2 * * *"
+  }'
+```
+
+**Cron Expression Examples:**
+- `0 2 * * *` - Daily at 2 AM
+- `0 */6 * * *` - Every 6 hours
+- `0 0 * * 0` - Weekly on Sunday
+- `0 0 1 * *` - Monthly on 1st
+
+---
+
+## 5️⃣ GET ALL WORKFLOWS
+
+**Endpoint:** `GET /api/workflows?userId={userId}`
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3001/api/workflows?userId=65a1234567890abcdef12345"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "total": 3,
+  "workflows": [
+    {
+      "_id": "65a1234567890abcdef12346",
+      "name": "Fetch and Store Orders",
+      "status": "draft",
+      "triggerType": "MANUAL",
+      "createdAt": "2024-01-15T10:30:00Z",
+      "updatedAt": "2024-01-15T10:35:00Z"
+    },
+    /* ... more workflows ... */
+  ]
+}
+```
+
+---
+
+## 6️⃣ UPDATE WORKFLOW
+
+**Endpoint:** `PUT /api/workflows/{workflowId}`
+
+**Request:**
+```bash
+curl -X PUT http://localhost:3001/api/workflows/65a1234567890abcdef12346 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated: Fetch and Store Orders",
+    "description": "Improved workflow"
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "workflow": {
+    "_id": "65a1234567890abcdef12346",
+    "name": "Updated: Fetch and Store Orders",
+    "description": "Improved workflow",
+    "status": "draft"
+  }
+}
+```
+
+---
+
+## 7️⃣ PUBLISH WORKFLOW
+
+**Endpoint:** `POST /api/workflows/{workflowId}/publish`
+
+**Request:**
+```bash
+curl -X POST http://localhost:3001/api/workflows/65a1234567890abcdef12346/publish
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Workflow published",
+  "workflow": {
+    "_id": "65a1234567890abcdef12346",
+    "status": "published"
+  }
+}
+```
+
+---
+
+## 8️⃣ EXECUTE WORKFLOW
+
+**Endpoint:** `POST /api/workflows/{workflowId}/execute`
+
+**Request:**
+```bash
+curl -X POST http://localhost:3001/api/workflows/65a1234567890abcdef12346/execute \
+  -H "Content-Type: application/json" \
+  -d '{
+    "inputData": {
+      "batchSize": 100,
+      "timeout": 30000
+    }
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Workflow execution started",
+  "runId": "65a1234567890abcdef12348",
+  "temporalWorkflowId": "workflow-65a1234567890abcdef12346-1705311000000"
+}
+```
+
+**HTTP Status:** `202 Accepted` (Async operation)
+
+---
+
+## 9️⃣ GET WORKFLOW EXECUTION HISTORY
+
+**Endpoint:** `GET /api/workflows/{workflowId}/runs?limit=50&skip=0`
+
+**Request:**
+```bash
+curl -X GET "http://localhost:3001/api/workflows/65a1234567890abcdef12346/runs?limit=10&skip=0"
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "total": 25,
+  "runs": [
+    {
+      "_id": "65a1234567890abcdef12348",
+      "workflowId": "65a1234567890abcdef12346",
+      "temporalWorkflowId": "workflow-65a1234567890abcdef12346-1705311000000",
+      "status": "SUCCESS",
+      "startTime": "2024-01-15T10:30:00Z",
+      "endTime": "2024-01-15T10:30:15Z",
+      "executionDetails": [
+        {
+          "activityName": "executeHttpRequestActivity",
+          "status": "SUCCESS",
+          "executionTime": 1250,
+          "output": {
+            "statusCode": 200,
+            "body": [ /* data */ ]
+          }
+        },
+        {
+          "activityName": "mongoDBWriteActivity",
+          "status": "SUCCESS",
+          "executionTime": 850,
+          "output": {
+            "insertedCount": 100
+          }
+        }
+      ]
+    },
+    /* ... more runs ... */
+  ]
+}
+```
+
+---
+
+## 🔟 GET WORKFLOW RUN DETAIL
+
+**Endpoint:** `GET /api/workflow-runs/{runId}`
+
+**Request:**
+```bash
+curl -X GET http://localhost:3001/api/workflow-runs/65a1234567890abcdef12348
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "run": {
+    "_id": "65a1234567890abcdef12348",
+    "workflowId": "65a1234567890abcdef12346",
+    "temporalWorkflowId": "workflow-65a1234567890abcdef12346-1705311000000",
+    "temporalRunId": "abc123def456",
+    "status": "SUCCESS",
+    "startTime": "2024-01-15T10:30:00Z",
+    "endTime": "2024-01-15T10:30:15Z",
+    "triggerContext": {
+      "batchSize": 100
+    },
+    "executionDetails": [
+      {
+        "activityName": "executeHttpRequestActivity",
+        "status": "SUCCESS",
+        "output": {
+          "statusCode": 200,
+          "body": [/* ... */]
+        },
+        "executionTime": 1250
+      },
+      {
+        "activityName": "mongoDBWriteActivity",
+        "status": "SUCCESS",
+        "output": {
+          "insertedCount": 100
+        },
+        "executionTime": 850
+      }
+    ],
+    "createdAt": "2024-01-15T10:30:00Z",
+    "updatedAt": "2024-01-15T10:30:15Z"
+  }
+}
+```
+
+---
+
+## 1️⃣1️⃣ WEBHOOK TRIGGER
+
+**Endpoint:** `POST /webhooks/{webhookId}`
+
+**Request:**
+```bash
+curl -X POST http://localhost:3001/webhooks/a1b2c3d4-e5f6-7890-abcd-ef1234567890 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "event": "order.created",
+    "orderId": "ORD-123456",
+    "customerId": "CUST-789",
+    "amount": 500,
+    "items": [
+      { "sku": "ITEM-1", "qty": 2 },
+      { "sku": "ITEM-2", "qty": 1 }
+    ]
+  }'
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "message": "Webhook triggered workflow execution",
+  "runId": "65a1234567890abcdef12349"
+}
+```
+
+---
+
+## Error Examples
+
+### Invalid Workflow ID
+```json
+{
+  "error": "Workflow not found"
+}
+```
+
+### Workflow Not Published
+```json
+{
+  "error": "Workflow must be published to execute"
+}
+```
+
+### Rate Limit Exceeded
+```json
+{
+  "error": "Rate limit exceeded: 100 runs per hour"
+}
+```
+
+### MongoDB Connection Error
+```json
+{
+  "error": "MongoDB operation failed: connection refused"
+}
+```
+
+---
+
+## Testing Workflow with Postman/Insomnia
+
+1. Import this as a collection
+2. Set variable: `baseUrl = http://localhost:3001`
+3. Replace placeholder IDs with real values
+4. Execute requests in order:
+   - Create User
+   - Create Workflow
+   - Publish Workflow
+   - Execute Workflow
+   - Get Workflow Runs
+   - Get Run Detail
+
+---
+
+## Monitoring
+
+### Check Temporal UI
+```
+http://localhost:8080
+```
+
+### Check Temporal Namespace
+```bash
+# List running workflows
+temporal workflow list
+
+# Get workflow details
+temporal workflow show --workflow-id workflow-65a1234567890abcdef12346-1705311000000
+
+# View workflow history
+temporal workflow show --workflow-id workflow-65a1234567890abcdef12346-1705311000000 --output json
+```
+
+### Check MongoDB
+```bash
+# Connect to MongoDB
+mongosh "mongodb+srv://workflow_user:password@cluster.mongodb.net/workflow-db"
+
+# List workflows
+db.workflows.find()
+
+# List runs
+db.workflow_runs.find().sort({ createdAt: -1 }).limit(10)
+```
