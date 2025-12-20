@@ -103,7 +103,7 @@ npm run dev
 ```
 [📨 Webhook] 
      ↓
-[🤖 Gemini] ← System Prompt thông minh
+[⚡ Groq AI] ← System Prompt thông minh (MIỄN PHÍ & NHANH)
      |        (Tự phân biệt chat vs feedback)
      ↓
 [🔍 Filter] ← Check: Có phải feedback không?
@@ -127,7 +127,7 @@ npm run dev
 Vào http://localhost:5173 → Kéo 6 nodes theo thứ tự:
 
 ```
-[Webhook] → [Gemini] → [Content Filter] → [Telegram]
+[Webhook] → [⚡ Groq AI] → [Content Filter] → [Telegram]
                               ↓ PASS
                          [Google Sheets]
                               ↓
@@ -137,8 +137,8 @@ Vào http://localhost:5173 → Kéo 6 nodes theo thứ tự:
 ```
 
 **Kết nối:**
-1. Webhook → Gemini
-2. Gemini → Content Filter (filter-check-feedback)
+1. Webhook → Groq AI
+2. Groq → Content Filter (filter-check-feedback)
 3. Filter REJECT → Telegram (chat thường)
 4. Filter PASS → Google Sheets
 5. Sheets → Content Filter (filter-negative)
@@ -155,8 +155,9 @@ Vào http://localhost:5173 → Kéo 6 nodes theo thứ tự:
 - Save
 - Copy webhook URL
 
-### **Node 2: Gemini AI (Thông minh nhất)**
-- Click node Gemini
+### **Node 2: ⚡ Groq AI (MIỄN PHÍ & CỰC NHANH)**
+- Click node Groq AI
+- **Model:** `llama-3.3-70b-versatile` (mạnh nhất)
 - **System Prompt:**
   ```
   Bạn là chatbot tư vấn sản phẩm thông minh.
@@ -168,9 +169,18 @@ Vào http://localhost:5173 → Kéo 6 nodes theo thứ tự:
      {
        "is_feedback": true,
        "sentiment": "positive hoặc negative hoặc neutral",
-       "score": 0-10,
+       "score": <số từ 1-10>,
        "original_text": "tin nhắn gốc của user"
      }
+     
+     QUY TẮC CHO ĐIỂM (score):
+     - User nói rõ số điểm ("9/10", "8 điểm") → Dùng số đó
+     - User nói "rất tốt", "xuất sắc", "hoàn hảo" → 9-10 điểm
+     - User nói "tốt", "hài lòng", "ổn" → 7-8 điểm
+     - User nói "bình thường", "tạm được" → 5-6 điểm
+     - User nói "chán", "không tốt", "thất vọng" → 3-4 điểm
+     - User nói "tệ", "quá tệ", "rất tệ" → 1-2 điểm
+     - Phân tích context: "cập nhật chậm" = 4 điểm, "lỗi nhiều" = 3 điểm
   
   2. NẾU là CÂU HỎI bình thường:
      → Đếm số tin nhắn trong conversation history
@@ -189,14 +199,16 @@ Vào http://localhost:5173 → Kéo 6 nodes theo thứ tự:
   - Laptop Dell: 15tr, giao 3-5 ngày, bảo hành 24 tháng
   ```
 - **User Message:** `{{webhook.message.text}}`
+- **Temperature:** `0.7`
+- **Max Tokens:** `2048`
 - **Use Conversation History:** ✅ **BẬT**
 - **Chat ID:** `{{webhook.message.chat.id}}`
-- Alias: `gemini-1`
+- Alias: `groq-1`
 - Save
 
 ### **Node 3: Content Filter #1 - Phân biệt chat vs feedback**
 - Click node Content Filter
-- **Check Text:** `{{gemini-1.response}}`
+- **Check Text:** `{{groq-1.response}}`
 - **Banned Words:** `"is_feedback": true`
 - Alias: `filter-check-feedback`
 - Save
@@ -205,7 +217,7 @@ Vào http://localhost:5173 → Kéo 6 nodes theo thứ tự:
 
 ### **Node 4: Telegram - Reply chat thường (từ filter REJECT)**
 - Kết nối từ **filter-check-feedback REJECT**
-- **Message:** `{{gemini-1.response}}`
+- **Message:** `{{groq-1.response}}`
 - **Chat ID:** `{{webhook.message.chat.id}}`
 - Alias: `telegram-chat`
 - Save
@@ -218,14 +230,19 @@ Vào http://localhost:5173 → Kéo 6 nodes theo thứ tự:
 - **Range:** `A:F`
 - **Values:** Click 📦:
   ```json
-  [["{{workflow.timestamp}}", "{{webhook.message.from.username}}", "{{webhook.message.chat.id}}", "{{webhook.message.text}}", "{{gemini-1.response}}", "8"]]
+  [["{{workflow.timestamp}}", "{{webhook.message.from.username}}", "{{webhook.message.chat.id}}", "{{webhook.message.text}}", "{{groq-1.response}}", "{{groq-1.response}}"]]
   ```
+  
+  > 💡 **Cột F (Score):** AI tự động phân tích và cho điểm 1-10 dựa trên feedback. JSON chứa field "score". Bạn có thể dùng Google Sheets formula để extract số điểm:
+  > ```
+  > =REGEXEXTRACT(F2, ""score"":\s*(\d+)")
+  > ```
 - Alias: `sheets-1`
 - Save
 
 ### **Node 6: Content Filter #2 - Check negative**
 - Kết nối từ **sheets-1**
-- **Check Text:** `{{gemini-1.response}}`
+- **Check Text:** `{{groq-1.response}}`
 - **Banned Words:** `"sentiment": "negative"`
 - Alias: `filter-negative`
 - Save
@@ -311,7 +328,7 @@ Bot: "Bảo hành 12 tháng..."
 User: "9/10 rất tốt!"
 Bot: "✅ Cảm ơn feedback của bạn!
      
-     Phân tích: {"sentiment":"positive"...}
+     ⚡ Groq AI phân tích: {"sentiment":"positive"...}
      ✅ Đã lưu vào hệ thống: Sheet1!A2"
 ```
 
@@ -333,21 +350,42 @@ Bot: "😔 Chúng tôi rất tiếc!
 
 ## 📊 Kết quả trong Google Sheets
 
-| Timestamp | Username | Chat ID | Feedback | Sentiment | Score |
-|-----------|----------|---------|----------|-----------|-------|
-| 2025-12-03 10:30 | baold | 123456 | 9/10 rất tốt! | {"sentiment":"positive"...} | {"sentiment":"positive"...} |
-| 2025-12-03 10:35 | baold | 123456 | 2/10 chậm quá | {"sentiment":"negative"...} | {"sentiment":"negative"...} |
+Feedback	Score
+"Rất tốt", "xuất sắc", "hoàn hảo"	9-10
+"Tốt", "hài lòng", "ổn"	7-8
+"Bình thường", "tạm được"	5-6
+"Chán", "không tốt", "thất vọng"	3-4
+"Tệ", "rất tệ", "quá tệ"	1-2
+"Cập nhật chậm", "lỗi nhiều"	3-4
+
+### 📐 Extract Score Number (Optional)
+Thêm cột G với formula để lấy chỉ số điểm:
+```
+=REGEXEXTRACT(F2, "score"":\s*(\d+)")
+```
+Kết quả: `9`, `3`, `4`, `9`
 
 ---
 
-## 💡 Logic thông minh của Gemini
+## 💡 Logic thông minh của Groq AI (MIỄN PHÍ)
 
-**Gemini tự động:**
+**Groq AI tự động:**
 1. ✅ Đếm số tin nhắn trong conversation history
 2. ✅ Sau 7 tin nhắn → Tự chèn câu hỏi đánh giá
 3. ✅ Chỉ hỏi 1 lần/ngày (check timestamp trong history)
 4. ✅ Phân biệt câu hỏi vs feedback
 5. ✅ Phân tích sentiment của feedback
+6. ✅ **TỰ ĐỘNG CHO ĐIỂM 1-10:**
+   - User nói rõ số → Dùng số đó ("9/10" = 9 điểm)
+   - User mô tả cảm xúc → AI phân tích:
+     * "Rất tốt" = 9-10 điểm
+     * "Tốt" = 7-8 điểm
+     * "Bình thường" = 5-6 điểm
+     * "Chán" = 3-4 điểm
+     * "Tệ" = 1-2 điểm
+   - Context-aware: "Cập nhật chậm" = 4 điểm, "Lỗi nhiều" = 3 điểm
+7. ✅ Inference < 1 giây (cực nhanh!)
+8. ✅ 14,400 requests/day miễn phí
 
 **Không cần:**
 - ❌ Node đếm tin nhắn
@@ -528,7 +566,7 @@ npm run dev
 - [ ] Sheet shared "Anyone with the link" → Editor  
 - [ ] Spreadsheet ID copied
 - [ ] 3 services đang chạy (worker, backend, frontend)
-- [ ] Workflow có đủ 8 nodes (1 webhook, 1 gemini, 2 filters, 1 sheets, 3 telegrams)
+- [ ] Workflow có đủ 8 nodes (1 webhook, 1 groq, 2 filters, 1 sheets, 3 telegrams)
 - [ ] Tất cả nodes đã config và kết nối đúng
 - [ ] Workflow saved và deployed
 - [ ] Webhook URL set vào Telegram
@@ -551,7 +589,7 @@ npm run dev
 
 **CHỈ CẦN:**
 - 1 webhook Telegram
-- 1 Gemini với System Prompt thông minh
+- 1 ⚡ Groq AI với System Prompt thông minh (MIỄN PHÍ)
 - 2 Content Filters để phân luồng
 - 1 Google Sheets để lưu data
 - 3 Telegram nodes để reply

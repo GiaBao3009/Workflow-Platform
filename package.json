@@ -20,7 +20,8 @@
     "docker:logs": "docker-compose logs -f",
     "docker:ps": "docker-compose ps",
     "setup": "npm install && npm run build",
-    "clean": "npm run clean --workspaces && rm -rf node_modules"
+    "clean": "npm run clean --workspaces && rm -rf node_modules",
+    "ngrok": "ngrok http 3001"
   },
   "keywords": [
     "workflow",
@@ -34,5 +35,10 @@
   "devDependencies": {
     "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
+    "mongodb": "^7.0.0"
   }
 }

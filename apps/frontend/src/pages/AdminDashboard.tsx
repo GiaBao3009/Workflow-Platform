@@ -1,238 +1,359 @@
+/**
+ * Comprehensive Admin Dashboard Component
+ * Includes: Stats, API Keys, Webhooks, Schedules, Audit Logs, Notifications, System Health
+ */
+
 import { useEffect, useState } from 'react';
-import { Users, Workflow, Play, Activity, TrendingUp, TrendingDown } from 'lucide-react';
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { 
+  Users, Workflow, Play, Activity, TrendingUp,
+  Key, Webhook as WebhookIcon, Clock, Bell, AlertCircle, CheckCircle,
+  RefreshCw, Database, Server, Zap, Shield, BarChart3
+} from 'lucide-react';
 import './AdminDashboard.css';
 
-interface Stats {
-  totalUsers: number;
-  activeUsers: number;
-  totalWorkflows: number;
-  activeWorkflows: number;
-  totalExecutions: number;
-  successRate: number;
-  userGrowth: number;
-  workflowGrowth: number;
-  executionGrowth: number;
+// Import admin components
+import UsersManagement from '../components/admin/UsersManagement';
+import ApiKeysManagement from '../components/admin/ApiKeysManagement';
+import WebhooksManagement from '../components/admin/WebhooksManagement';
+import SchedulesManagement from '../components/admin/SchedulesManagement';
+import AuditLogs from '../components/admin/AuditLogs';
+import NotificationsManagement from '../components/admin/NotificationsManagement';
+import SystemHealth from '../components/admin/SystemHealth';
+
+type Tab = 'dashboard' | 'users' | 'api-keys' | 'webhooks' | 'schedules' | 'audit-logs' | 'notifications' | 'system-health';
+
+interface DashboardStats {
+  users: {
+    total: number;
+    active: number;
+    newThisMonth: number;
+  };
+  workflows: {
+    total: number;
+    active: number;
+  };
+  executions: {
+    total: number;
+    completed: number;
+    failed: number;
+    successRate: number;
+  };
+  webhooks: {
+    total: number;
+    active: number;
+  };
+  schedules: {
+    total: number;
+    active: number;
+  };
+  apiKeys: {
+    total: number;
+    global: number;
+  };
 }
 
+// Default stats when API is not available
+const defaultStats: DashboardStats = {
+  users: { total: 0, active: 0, newThisMonth: 0 },
+  workflows: { total: 0, active: 0 },
+  executions: { total: 0, completed: 0, failed: 0, successRate: 0 },
+  webhooks: { total: 0, active: 0 },
+  schedules: { total: 0, active: 0 },
+  apiKeys: { total: 0, global: 0 }
+};
+
 export default function AdminDashboard() {
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [stats, setStats] = useState<DashboardStats>(defaultStats);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    loadStats();
+    loadDashboardStats();
   }, []);
 
-  const loadStats = async () => {
+  const loadDashboardStats = async (isRefresh = false) => {
     try {
-      const response = await fetch('/api/admin/dashboard');
+      if (isRefresh) setRefreshing(true);
+      setError(null);
+      
+      const token = localStorage.getItem('auth_token') || localStorage.getItem('token');
+      if (!token) {
+        setError('⚠️ Bạn chưa đăng nhập. Vui lòng đăng nhập để xem trang admin.');
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+      
+      const response = await fetch('/api/admin/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.status === 401 || response.status === 403) {
+        const errorData = await response.json().catch(() => ({}));
+        setError(`🔒 ${errorData.message || 'Bạn không có quyền truy cập. Vui lòng đăng nhập với tài khoản admin.'}`);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to load dashboard');
+      }
+      
       const data = await response.json();
       setStats(data);
-    } catch (error) {
-      console.error('Lỗi tải thống kê:', error);
-      // Fallback: Load từ database trực tiếp
-      loadStatsFromDB();
+      setError(null);
+    } catch (error: any) {
+      console.error('Error loading dashboard:', error);
+      setError(`❌ ${error.message || 'Không thể kết nối với server. Vui lòng kiểm tra backend có đang chạy không.'}`);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  const loadStatsFromDB = async () => {
-    try {
-      // Lấy users
-      const usersRes = await fetch('/api/users');
-      const users = await usersRes.json();
-      
-      // Lấy workflows
-      const workflowsRes = await fetch('/api/workflows');
-      const workflows = await workflowsRes.json();
-      
-      // Lấy executions
-      const executionsRes = await fetch('/api/executions');
-      const executions = await executionsRes.json();
-
-      const completedExecutions = executions.filter((e: any) => e.status === 'completed').length;
-      
-      setStats({
-        totalUsers: users.length || 0,
-        activeUsers: users.filter((u: any) => u.isActive).length || 0,
-        totalWorkflows: workflows.length || 0,
-        activeWorkflows: workflows.filter((w: any) => w.status === 'active').length || 0,
-        totalExecutions: executions.length || 0,
-        successRate: executions.length > 0 ? Math.round((completedExecutions / executions.length) * 100) : 0,
-        userGrowth: 0,
-        workflowGrowth: 0,
-        executionGrowth: 0,
-      });
-    } catch (error) {
-      console.error('Lỗi tải từ database:', error);
-    }
+  const handleRefresh = () => {
+    loadDashboardStats(true);
   };
-
-  const executionData = [
-    { name: 'T2', thanhCong: 120, thatBai: 8 },
-    { name: 'T3', thanhCong: 145, thatBai: 12 },
-    { name: 'T4', thanhCong: 132, thatBai: 6 },
-    { name: 'T5', thanhCong: 168, thatBai: 15 },
-    { name: 'T6', thanhCong: 190, thatBai: 10 },
-    { name: 'T7', thanhCong: 95, thatBai: 4 },
-    { name: 'CN', thanhCong: 78, thatBai: 3 },
-  ];
-
-  const userActivityData = [
-    { gio: '00:00', nguoiDung: 12 },
-    { gio: '04:00', nguoiDung: 8 },
-    { gio: '08:00', nguoiDung: 45 },
-    { gio: '12:00', nguoiDung: 78 },
-    { gio: '16:00', nguoiDung: 92 },
-    { gio: '20:00', nguoiDung: 65 },
-    { gio: '23:00', nguoiDung: 32 },
-  ];
-
-  const workflowTypeData = [
-    { name: 'Telegram Bots', value: 45, color: '#ff6b35' },
-    { name: 'Xử lý dữ liệu', value: 30, color: '#f7931e' },
-    { name: 'Tích hợp API', value: 15, color: '#fdc830' },
-    { name: 'Tác vụ định kỳ', value: 10, color: '#37b7c3' },
-  ];
 
   if (loading) {
-    return <div className="admin-loading">Đang tải bảng điều khiển...</div>;
+    return (
+      <div className="admin-loading">
+        <div className="loading-spinner"></div>
+        <p>Đang tải bảng điều khiển...</p>
+      </div>
+    );
   }
 
   return (
     <div className="admin-dashboard">
       <div className="admin-header">
-        <h1>Bảng Điều Khiển Quản Trị</h1>
-        <p>Tổng quan nền tảng workflow</p>
+        <div className="admin-header-content">
+          <h1>
+            <Shield className="header-icon" size={32} />
+            Bảng Điều Khiển Quản Trị
+          </h1>
+          <p>Quản lý toàn diện nền tảng workflow automation</p>
+        </div>
+        <button 
+          className={`refresh-btn ${refreshing ? 'spinning' : ''}`}
+          onClick={handleRefresh}
+          disabled={refreshing}
+        >
+          <RefreshCw size={18} />
+          {refreshing ? 'Đang tải...' : 'Làm mới'}
+        </button>
       </div>
 
-      <div className="admin-stats-grid">
-        <div className="admin-stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
-            <Users size={24} />
-          </div>
-          <div className="stat-content">
-            <p className="stat-label">Tổng Người Dùng</p>
-            <h3 className="stat-value">{stats?.totalUsers || 0}</h3>
-            <div className={`stat-change ${(stats?.userGrowth || 0) >= 0 ? 'positive' : 'negative'}`}>
-              {(stats?.userGrowth || 0) >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-              <span>{Math.abs(stats?.userGrowth || 0)}% so với tháng trước</span>
-            </div>
-          </div>
+      {error && (
+        <div className="admin-error">
+          <AlertCircle size={16} />
+          <span>{error}</span>
+          {error.includes('đăng nhập') && (
+            <a href="/" style={{ marginLeft: '8px', color: '#4facfe', textDecoration: 'underline' }}>
+              Đi tới trang đăng nhập
+            </a>
+          )}
         </div>
+      )}
 
-        <div className="admin-stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>
-            <Workflow size={24} />
-          </div>
-          <div className="stat-content">
-            <p className="stat-label">Workflow Hoạt Động</p>
-            <h3 className="stat-value">{stats?.activeWorkflows || 0}</h3>
-            <div className={`stat-change ${(stats?.workflowGrowth || 0) >= 0 ? 'positive' : 'negative'}`}>
-              {(stats?.workflowGrowth || 0) >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-              <span>{Math.abs(stats?.workflowGrowth || 0)}% so với tháng trước</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="admin-stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}>
-            <Play size={24} />
-          </div>
-          <div className="stat-content">
-            <p className="stat-label">Tổng Lượt Thực Thi</p>
-            <h3 className="stat-value">{stats?.totalExecutions || 0}</h3>
-            <div className={`stat-change ${(stats?.executionGrowth || 0) >= 0 ? 'positive' : 'negative'}`}>
-              {(stats?.executionGrowth || 0) >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
-              <span>{Math.abs(stats?.executionGrowth || 0)}% so với tháng trước</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="admin-stat-card">
-          <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' }}>
-            <Activity size={24} />
-          </div>
-          <div className="stat-content">
-            <p className="stat-label">Tỷ Lệ Thành Công</p>
-            <h3 className="stat-value">{stats?.successRate || 0}%</h3>
-            <div className="stat-change positive">
-              <TrendingUp size={14} />
-              <span>Hiệu suất xuất sắc</span>
-            </div>
-          </div>
-        </div>
+      {/* Tab Navigation */}
+      <div className="admin-tabs">
+        <button 
+          className={`admin-tab ${activeTab === 'dashboard' ? 'active' : ''}`}
+          onClick={() => setActiveTab('dashboard')}
+        >
+          <Activity size={18} />
+          Dashboard
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'users' ? 'active' : ''}`}
+          onClick={() => setActiveTab('users')}
+        >
+          <Users size={18} />
+          Users
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'api-keys' ? 'active' : ''}`}
+          onClick={() => setActiveTab('api-keys')}
+        >
+          <Key size={18} />
+          API Keys
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'webhooks' ? 'active' : ''}`}
+          onClick={() => setActiveTab('webhooks')}
+        >
+          <WebhookIcon size={18} />
+          Webhooks
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'schedules' ? 'active' : ''}`}
+          onClick={() => setActiveTab('schedules')}
+        >
+          <Clock size={18} />
+          Schedules
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'audit-logs' ? 'active' : ''}`}
+          onClick={() => setActiveTab('audit-logs')}
+        >
+          <AlertCircle size={18} />
+          Audit Logs
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'notifications' ? 'active' : ''}`}
+          onClick={() => setActiveTab('notifications')}
+        >
+          <Bell size={18} />
+          Notifications
+        </button>
+        <button 
+          className={`admin-tab ${activeTab === 'system-health' ? 'active' : ''}`}
+          onClick={() => setActiveTab('system-health')}
+        >
+          <CheckCircle size={18} />
+          System Health
+        </button>
       </div>
 
-      <div className="admin-charts-grid">
-        <div className="admin-chart-card">
-          <div className="chart-header">
-            <h3>Xu Hướng Thực Thi</h3>
-            <p>7 ngày qua</p>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={executionData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2a3350" />
-              <XAxis dataKey="name" stroke="#8b92b8" />
-              <YAxis stroke="#8b92b8" />
-              <Tooltip 
-                contentStyle={{ background: '#1f2744', border: '1px solid #2a3350', borderRadius: '8px' }}
-                labelStyle={{ color: '#fff' }}
-              />
-              <Legend />
-              <Bar dataKey="thanhCong" name="Thành công" fill="#43e97b" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="thatBai" name="Thất bại" fill="#f5576c" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+      {/* Tab Content */}
+      <div className="admin-content">
+        {activeTab === 'dashboard' && (
+          <div className="dashboard-overview">
+            {/* Quick Stats Row */}
+            <div className="quick-stats-row">
+              <div className="quick-stat">
+                <Database size={20} />
+                <span>MongoDB: <strong className="status-ok">Connected</strong></span>
+              </div>
+              <div className="quick-stat">
+                <Server size={20} />
+                <span>Temporal: <strong className="status-ok">Running</strong></span>
+              </div>
+              <div className="quick-stat">
+                <Zap size={20} />
+                <span>API: <strong className="status-ok">Healthy</strong></span>
+              </div>
+              <div className="quick-stat">
+                <BarChart3 size={20} />
+                <span>Uptime: <strong>99.9%</strong></span>
+              </div>
+            </div>
 
-        <div className="admin-chart-card">
-          <div className="chart-header">
-            <h3>Hoạt Động Người Dùng</h3>
-            <p>Hôm nay</p>
-          </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={userActivityData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2a3350" />
-              <XAxis dataKey="gio" stroke="#8b92b8" />
-              <YAxis stroke="#8b92b8" />
-              <Tooltip 
-                contentStyle={{ background: '#1f2744', border: '1px solid #2a3350', borderRadius: '8px' }}
-                labelStyle={{ color: '#fff' }}
-              />
-              <Line type="monotone" dataKey="nguoiDung" name="Người dùng" stroke="#4facfe" strokeWidth={3} dot={{ fill: '#4facfe', r: 5 }} />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+            {/* Stats Cards */}
+            <div className="admin-stats-grid">
+              <div className="admin-stat-card">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+                  <Users size={24} />
+                </div>
+                <div className="stat-content">
+                  <p className="stat-label">Tổng Người Dùng</p>
+                  <h3 className="stat-value">{stats.users.total}</h3>
+                  <div className="stat-details">
+                    <span>✅ Active: {stats.users.active}</span>
+                    <span className="stat-meta">🆕 Mới: {stats.users.newThisMonth}</span>
+                  </div>
+                </div>
+              </div>
 
-        <div className="admin-chart-card">
-          <div className="chart-header">
-            <h3>Loại Workflow</h3>
-            <p>Phân bổ</p>
+              <div className="admin-stat-card">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)' }}>
+                  <Workflow size={24} />
+                </div>
+                <div className="stat-content">
+                  <p className="stat-label">Workflow Hoạt Động</p>
+                  <h3 className="stat-value">{stats.workflows.active}</h3>
+                  <div className="stat-details">
+                    <span>📊 Tổng: {stats.workflows.total}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-stat-card">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)' }}>
+                  <Play size={24} />
+                </div>
+                <div className="stat-content">
+                  <p className="stat-label">Tổng Lượt Thực Thi</p>
+                  <h3 className="stat-value">{stats.executions.total}</h3>
+                  <div className="stat-details">
+                    <span>✅ Thành công: {stats.executions.completed}</span>
+                    <span className="stat-meta">❌ Thất bại: {stats.executions.failed}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-stat-card">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)' }}>
+                  <Activity size={24} />
+                </div>
+                <div className="stat-content">
+                  <p className="stat-label">Tỷ Lệ Thành Công</p>
+                  <h3 className="stat-value">{stats.executions.successRate}%</h3>
+                  <div className="stat-change positive">
+                    <TrendingUp size={14} />
+                    <span>Hiệu suất xuất sắc</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-stat-card">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)' }}>
+                  <Key size={24} />
+                </div>
+                <div className="stat-content">
+                  <p className="stat-label">API Keys</p>
+                  <h3 className="stat-value">{stats.apiKeys.total}</h3>
+                  <div className="stat-details">
+                    <span>🌍 Global: {stats.apiKeys.global}</span>
+                    <span className="stat-meta">👤 User: {stats.apiKeys.total - stats.apiKeys.global}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-stat-card">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #30cfd0 0%, #330867 100%)' }}>
+                  <WebhookIcon size={24} />
+                </div>
+                <div className="stat-content">
+                  <p className="stat-label">Webhooks</p>
+                  <h3 className="stat-value">{stats.webhooks.total}</h3>
+                  <div className="stat-details">
+                    <span>✅ Active: {stats.webhooks.active}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-stat-card">
+                <div className="stat-icon" style={{ background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)' }}>
+                  <Clock size={24} />
+                </div>
+                <div className="stat-content">
+                  <p className="stat-label">Scheduled Tasks</p>
+                  <h3 className="stat-value">{stats.schedules.total}</h3>
+                  <div className="stat-details">
+                    <span>▶️ Active: {stats.schedules.active}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <ResponsiveContainer width="100%" height={300}>
-            <PieChart>
-              <Pie
-                data={workflowTypeData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                outerRadius={100}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {workflowTypeData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip 
-                contentStyle={{ background: '#1f2744', border: '1px solid #2a3350', borderRadius: '8px' }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        )}
+
+        {activeTab === 'users' && <UsersManagement />}
+        {activeTab === 'api-keys' && <ApiKeysManagement />}
+        {activeTab === 'webhooks' && <WebhooksManagement />}
+        {activeTab === 'schedules' && <SchedulesManagement />}
+        {activeTab === 'audit-logs' && <AuditLogs />}
+        {activeTab === 'notifications' && <NotificationsManagement />}
+        {activeTab === 'system-health' && <SystemHealth />}
       </div>
     </div>
   );

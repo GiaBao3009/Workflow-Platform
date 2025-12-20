@@ -882,14 +882,14 @@
 .profile-name {
   font-size: 22px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
   margin: 0 0 4px;
   letter-spacing: -0.3px;
 }
 
 .profile-email {
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-secondary, #64748b);
   margin: 0 0 12px;
 }
 
@@ -898,12 +898,12 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #e2e8f0;
+  background: var(--bg-tertiary, linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%));
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 100px;
   font-size: 13px;
   font-weight: 600;
-  color: #475569;
+  color: var(--text-primary, #475569);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
@@ -917,8 +917,8 @@
   align-items: center;
   justify-content: center;
   gap: 0;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-elevated, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
   border-radius: 12px;
   padding: 12px 8px;
   width: calc(100% - 48px);
@@ -949,19 +949,19 @@
 .stat-value {
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--text-primary, #1e293b);
 }
 
 .stat-label {
   font-size: 10px;
-  color: #94a3b8;
+  color: var(--text-secondary, #94a3b8);
   font-weight: 500;
 }
 
 .stat-divider {
   width: 1px;
   height: 30px;
-  background: #e2e8f0;
+  background: var(--border-color, #e2e8f0);
 }
 
 /* Actions */
@@ -1259,3 +1259,213 @@
   }
 }
 
+/* ============================================
+   THEME-SPECIFIC OVERRIDES FOR PROFILE CARD
+   ============================================ */
+
+/* Dark Mode - Modal background */
+[data-theme="dark"] .auth-modal {
+  background: #1e293b !important;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05) !important;
+}
+
+[data-theme="dark"] .auth-modal.profile-mode {
+  background: #1e293b !important;
+}
+
+[data-theme="dark"] .user-profile-container {
+  background: #1e293b !important;
+}
+
+/* Dark Mode - Profile text needs to be light */
+[data-theme="dark"] .profile-name,
+[data-theme="dark"] .user-profile-container .profile-name,
+[data-theme="dark"] .auth-modal-content .profile-name,
+[data-theme="dark"] h2.profile-name {
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .profile-email,
+[data-theme="dark"] .user-profile-container .profile-email,
+[data-theme="dark"] .auth-modal-content .profile-email,
+[data-theme="dark"] p.profile-email {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .profile-stats {
+  background: #1e293b;
+  border-color: #334155;
+}
+
+[data-theme="dark"] .stat-value {
+  color: #f1f5f9;
+}
+
+[data-theme="dark"] .stat-label {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .stat-divider {
+  background: #334155;
+}
+
+[data-theme="dark"] .profile-badge {
+  background: #334155;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+
+/* Dark Mode - Profile action buttons */
+[data-theme="dark"] .btn-profile-secondary {
+  background: #334155 !important;
+  border-color: #475569 !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .btn-profile-secondary:hover {
+  background: #475569 !important;
+  border-color: #818cf8 !important;
+  color: #a5b4fc !important;
+}
+
+[data-theme="dark"] .settings-toggle {
+  border-color: #475569;
+  color: #e2e8f0 !important;
+  background: #334155 !important;
+}
+
+[data-theme="dark"] .settings-toggle:hover,
+[data-theme="dark"] .settings-toggle.active {
+  border-color: #818cf8;
+  color: #a5b4fc;
+  background: rgba(129, 140, 248, 0.1);
+}
+
+[data-theme="dark"] .profile-settings {
+  background: rgba(30, 41, 59, 0.95) !important;
+  border-color: #475569 !important;
+}
+
+[data-theme="dark"] .profile-settings .setting-header label,
+[data-theme="dark"] .setting-item label {
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .setting-divider {
+  background: linear-gradient(to right, transparent, #475569, transparent);
+}
+
+[data-theme="dark"] .setting-slider {
+  background: #334155;
+}
+
+[data-theme="dark"] .setting-range-labels span {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .theme-option {
+  background: #1e293b;
+  border-color: #334155;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .theme-option:hover {
+  border-color: #6366f1;
+  background: #293548;
+}
+
+[data-theme="dark"] .theme-option.active {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: #6366f1;
+}
+
+[data-theme="dark"] .theme-label {
+  color: #e2e8f0;
+}
+
+/* Purple Theme - Profile text needs contrast against purple gradient */
+[data-theme="purple"] .user-profile-container .profile-name,
+[data-theme="purple"] .auth-modal-content .profile-name {
+  color: #1e1b4b !important;
+}
+
+[data-theme="purple"] .user-profile-container .profile-email,
+[data-theme="purple"] .auth-modal-content .profile-email {
+  color: #4c1d95 !important;
+}
+
+[data-theme="purple"] .profile-stats {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+}
+
+[data-theme="purple"] .stat-value {
+  color: #581c87;
+}
+
+[data-theme="purple"] .stat-label {
+  color: #7c3aed;
+}
+
+[data-theme="purple"] .stat-divider {
+  background: #e9d5ff;
+}
+
+[data-theme="purple"] .profile-badge {
+  background: #f3e8ff;
+  border-color: #e9d5ff;
+  color: #6b21a8;
+}
+
+[data-theme="purple"] .settings-toggle {
+  border-color: #d8b4fe;
+  color: #7c3aed;
+}
+
+[data-theme="purple"] .settings-toggle:hover,
+[data-theme="purple"] .settings-toggle.active {
+  border-color: #a855f7;
+  color: #7c3aed;
+  background: rgba(168, 85, 247, 0.08);
+}
+
+[data-theme="purple"] .profile-settings {
+  background: rgba(168, 85, 247, 0.06);
+  border-color: rgba(168, 85, 247, 0.15);
+}
+
+[data-theme="purple"] .setting-header label {
+  color: #581c87;
+}
+
+[data-theme="purple"] .setting-divider {
+  background: linear-gradient(to right, transparent, #e9d5ff, transparent);
+}
+
+[data-theme="purple"] .setting-slider {
+  background: #e9d5ff;
+}
+
+[data-theme="purple"] .setting-range-labels span {
+  color: #7c3aed;
+}
+
+[data-theme="purple"] .theme-option {
+  background: #faf5ff;
+  border-color: #e9d5ff;
+  color: #581c87;
+}
+
+[data-theme="purple"] .theme-option:hover {
+  border-color: #a855f7;
+  background: #f3e8ff;
+}
+
+[data-theme="purple"] .theme-option.active {
+  background: rgba(168, 85, 247, 0.12);
+  border-color: #a855f7;
+}
+
+[data-theme="purple"] .theme-label {
+  color: #581c87;
+}

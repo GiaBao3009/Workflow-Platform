@@ -16,6 +16,7 @@ const {
   sendTelegramMessage,
   callChatGPT,
   callGemini,
+  callGroq,
   filterContent,
   googleSheetsOperation,
 } = proxyActivities<typeof activities>({
@@ -77,20 +78,25 @@ function evaluateTemplate(
   const variablePattern = /\{\{([a-zA-Z0-9_-]+)\.([a-zA-Z0-9_.]+)\}\}/g;
   
   return template.replace(variablePattern, (match, nodeId, path) => {
+    console.log(`[Workflow] 🔍 Evaluating template: ${match}`);
+    console.log(`[Workflow]    Node ID: ${nodeId}`);
+    console.log(`[Workflow]    Path: ${path}`);
+    console.log(`[Workflow]    Available results:`, Object.keys(previousResults));
+    
     // Try exact match first
     let nodeResult = previousResults[nodeId];
     
-    // If not found, try to find by prefix (e.g., "gemini-1" matches "gemini-1764521667996")
+    // If not found, try to find by prefix (e.g., "httpRequest-1" matches "httpRequest-1763988542797")
     if (!nodeResult) {
-      const matchingKey = Object.keys(previousResults).find(key => key.startsWith(nodeId + '-'));
+      const matchingKey = Object.keys(previousResults).find(key => key.startsWith(nodeId));
       if (matchingKey) {
         nodeResult = previousResults[matchingKey];
-        console.log(`[Workflow] 🔍 Found node by prefix: ${nodeId} -> ${matchingKey}`);
+        console.log(`[Workflow] ✅ Found node by prefix: ${nodeId} -> ${matchingKey}`);
       }
     }
     
     if (!nodeResult) {
-      console.log(`[Workflow] Variable not found: ${nodeId}`);
+      console.log(`[Workflow] ❌ Variable not found: ${nodeId}`);
       return match; // Keep original if not found
     }
     
@@ -102,10 +108,13 @@ function evaluateTemplate(
       if (value && typeof value === 'object' && part in value) {
         value = value[part];
       } else {
-        console.log(`[Workflow] Path not found: ${nodeId}.${path}`);
+        console.log(`[Workflow] ❌ Path not found: ${nodeId}.${path}`);
+        console.log(`[Workflow]    Available keys in current level:`, Object.keys(value || {}));
         return match;
       }
     }
+    
+    console.log(`[Workflow] ✅ Resolved value:`, value);
     
     // Convert to string
     return typeof value === 'object' ? JSON.stringify(value) : String(value);
@@ -150,7 +159,7 @@ export async function executeWorkflow(
 ): Promise<Record<string, any>> {
   const results: Record<string, any> = {};
   
-  // Initialize results with context data (webhook payload, etc.)
+  // Initialize results with context data (webhook payload, etc.)//=======//
   if (contextData) {
     Object.assign(results, contextData);
     console.log(`[Workflow ${workflowId}] Initialized with context:`, Object.keys(contextData));
@@ -172,14 +181,18 @@ export async function executeWorkflow(
   // Sort activities theo order
   const sortedActivities = [...activities].sort((a, b) => a.order - b.order);
 
-  // Execute từng activity
+  // Execute từng activity //=======//
   for (const activity of sortedActivities) {
     const startTime = new Date();
     
     // ⚡ Kiểm tra condition trước khi chạy
     if (activity.condition) {
       const { sourceNode, sourceHandle } = activity.condition;
+      console.log(`[Workflow] 🔍 Activity ${activity.activityName} has condition: ${sourceNode} -> ${sourceHandle}`);
+      console.log(`[Workflow] 🔍 Available results:`, Object.keys(results));
+      
       const sourceResult = results[sourceNode];
+      console.log(`[Workflow] 🔍 Source result for ${sourceNode}:`, sourceResult);
       
       // Tìm alias của source node (filter-1, filter-2, ...)
       const sourceAlias = Object.keys(results).find(key => 
@@ -189,13 +202,21 @@ export async function executeWorkflow(
       console.log(`[Workflow] Checking condition for ${activity.activityName}: ${sourceNode} (${sourceAlias || sourceNode}) must be ${sourceHandle}`);
       
       // ✅ FIX: If source node didn't run (undefined), skip this activity
-      if (!sourceResult || typeof sourceResult.passed !== 'boolean') {
-        console.log(`[Workflow] ⏭️  Skipping ${activity.activityName} (source node ${sourceNode} not executed or has no result)`);
+      if (!sourceResult) {
+        console.log(`[Workflow] ⏭️  Skipping ${activity.activityName} (source node ${sourceNode} not executed)`);
+        continue;
+      }
+      
+      if (typeof sourceResult.passed !== 'boolean') {
+        console.log(`[Workflow] ⚠️  Source result has no 'passed' property:`, sourceResult);
+        console.log(`[Workflow] ⏭️  Skipping ${activity.activityName}`);
         continue;
       }
       
       const shouldRun = (sourceHandle === 'pass' && sourceResult.passed) || 
                        (sourceHandle === 'reject' && !sourceResult.passed);
+      
+      console.log(`[Workflow] 🔍 Should run? passed=${sourceResult.passed}, handle=${sourceHandle}, shouldRun=${shouldRun}`);
       
       if (!shouldRun) {
         console.log(`[Workflow] ⏭️  Skipping ${activity.activityName} (condition not met: ${sourceHandle})`);
@@ -281,6 +302,13 @@ export async function executeWorkflow(
           });
           break;
 
+        case 'GROQ':
+          result = await callGroq(evaluatedConfig, {
+            workflowId,
+            previousResults: results,
+          });
+          break;
+
         case 'CONTENT_FILTER':
           result = await filterContent(evaluatedConfig, {
             workflowId,
@@ -302,6 +330,16 @@ export async function executeWorkflow(
             workflowId,
             previousResults: results,
           });
+          break;
+
+        case 'STATIC':
+          // Static response node - no activity needed
+          try {
+            result = JSON.parse(evaluatedConfig.response || '{}');
+          } catch {
+            result = { response: evaluatedConfig.response || 'OK' };
+          }
+          console.log('[Workflow] Static node returned:', result);
           break;
 
         default:

@@ -11,6 +11,41 @@ import { emailService } from '../services/email.service';
 import crypto from 'crypto';
 
 const router = Router();
+// ==================== LOCAL LOGIN ====================
+router.post('/login', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email và mật khẩu là bắt buộc.' });
+  }
+  try {
+    const user = await User.findOne({ email, provider: 'local' }).select('+password');
+    if (!user || !user.password) {
+      return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng.' });
+    }
+    const bcrypt = require('bcrypt');
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res.status(401).json({ error: 'Email hoặc mật khẩu không đúng.' });
+    }
+    // Tạo token
+    const token = generateToken(user);
+    res.json({
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        avatar: user.avatar,
+        provider: user.provider,
+        role: user.role || 'user',
+        autoSaveInterval: user.autoSaveInterval,
+      },
+      token,
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Lỗi server.' });
+  }
+});
 
 // ==================== GOOGLE OAUTH ====================
 router.get(
@@ -89,6 +124,7 @@ router.get('/me', async (req: Request, res: Response) => {
         name: user.name,
         avatar: user.avatar,
         provider: user.provider,
+        role: (user as any).role || 'user',
         autoSaveInterval: user.autoSaveInterval,
       },
     });

@@ -1,11 +1,12 @@
 /**
  * Passport Configuration cho OAuth Authentication
- * Hỗ trợ Google OAuth 2.0 và GitHub OAuth
+ * Hỗ trợ Google OAuth 2.0, GitHub OAuth và JWT
  */
 
 import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GitHubStrategy } from 'passport-github2';
+import { Strategy as JwtStrategy, ExtractJwt } from 'passport-jwt';
 import { User, IUser } from '../schema.mongodb';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
@@ -115,6 +116,46 @@ passport.use(
       }
     }
   )
+);
+
+// ==================== JWT STRATEGY ====================
+const jwtOptions = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: process.env.JWT_SECRET || 'workflow_jwt_secret_change_in_production'
+};
+
+passport.use(
+  new JwtStrategy(jwtOptions, async (jwtPayload, done) => {
+    try {
+      console.log('🔍 JWT Strategy - Payload:', jwtPayload);
+      
+      // JWT payload có thể chứa userId hoặc id
+      const userId = jwtPayload.userId || jwtPayload.id || jwtPayload.sub;
+      
+      if (!userId) {
+        console.log('❌ No userId found in JWT payload');
+        return done(null, false);
+      }
+      
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        console.log('❌ User not found:', userId);
+        return done(null, false);
+      }
+      
+      if (!user.isActive) {
+        console.log('❌ User is not active:', userId);
+        return done(null, false);
+      }
+      
+      console.log('✅ JWT verified - User:', user.email, 'Role:', (user as any).role);
+      return done(null, user);
+    } catch (error) {
+      console.error('❌ JWT verification error:', error);
+      return done(error, false);
+    }
+  })
 );
 
 export default passport;

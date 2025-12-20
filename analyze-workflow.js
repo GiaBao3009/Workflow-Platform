@@ -1,14 +1,12 @@
 const axios = require('axios');
 
+const TARGET_WORKFLOW_ID = '693ba5dcbb9af2ecdcaa674a';
+
 async function analyzeWorkflowNodes() {
   try {
-    // Get workflow
-    const listResponse = await axios.get('http://localhost:3001/api/workflows');
-    const workflows = listResponse.data.workflows || [];
-    
-    const workflow = workflows.find(w => 
-      w.reactFlowData?.nodes?.some(n => n.type === 'contentFilter')
-    );
+    // Get specific workflow
+    const response = await axios.get(`http://localhost:3001/api/workflows/${TARGET_WORKFLOW_ID}`);
+    const workflow = response.data.workflow || response.data;
     
     if (!workflow) {
       console.log('❌ Workflow not found');

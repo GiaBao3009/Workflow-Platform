@@ -38,10 +38,10 @@ export default function NodeConfigPanel({ node, nodes, edges, onClose, onSave }:
   }
 
   // Get available variables from previous nodes
-  const getAvailableVariables = (): { nodeId: string; nodeType: string; variables: string[] }[] => {
+  const getAvailableVariables = (): { nodeId: string; displayName: string; nodeType: string; variables: string[] }[] => {
     const previousNodes = getPreviousNodes()
     
-    return previousNodes.map(prevNode => {
+    return previousNodes.map((prevNode, index) => {
       let variables: string[] = []
       
       switch (prevNode.type) {
@@ -102,6 +102,13 @@ export default function NodeConfigPanel({ node, nodes, edges, onClose, onSave }:
             'tokens',      // Tokens used
           ]
           break
+        case 'groq':
+          variables = [
+            'response',    // AI response text
+            'model',       // Model used
+            'tokens',      // Tokens used
+          ]
+          break
         case 'contentFilter':
           variables = [
             'passed',          // Boolean (true if clean)
@@ -119,8 +126,14 @@ export default function NodeConfigPanel({ node, nodes, edges, onClose, onSave }:
           break
       }
       
+      // Create short display name by removing timestamp
+      // e.g., "contentFilter-1765516891824" -> "contentFilter-1"
+      const sameTypeCount = previousNodes.slice(0, index + 1).filter(n => n.type === prevNode.type).length;
+      const displayName = `${prevNode.type}-${sameTypeCount}`;
+      
       return {
-        nodeId: prevNode.id,
+        nodeId: prevNode.id,          // Full ID for insertion (with timestamp)
+        displayName: displayName,      // Short name for display
         nodeType: prevNode.type || 'unknown',
         variables,
       }
@@ -859,6 +872,132 @@ export default function NodeConfigPanel({ node, nodes, edges, onClose, onSave }:
           </>
         )
 
+      case 'groq':
+        return (
+          <>
+            <div className="form-group">
+              <label>Model</label>
+              <select 
+                value={formData.model || 'llama-3.3-70b'}
+                onChange={(e) => updateField('model', e.target.value)}
+              >
+                <option value="llama-3.3-70b">Llama 3.3 70B (MIỄN PHÍ, Nhanh nhất)</option>
+                <option value="mixtral-8x7b">Mixtral 8x7B (Nhanh)</option>
+                <option value="gemma-7b">Gemma 2 9B (Nhẹ)</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>System Prompt</label>
+              <div className="input-with-helper">
+                <textarea
+                  placeholder="Bạn là trợ lý AI thân thiện, trả lời bằng tiếng Việt..."
+                  value={formData.systemPrompt || ''}
+                  onChange={(e) => updateField('systemPrompt', e.target.value)}
+                  onFocus={() => setActiveField('systemPrompt')}
+                  rows={3}
+                />
+              </div>
+              <small className="hint">Hướng dẫn AI về vai trò và cách trả lời</small>
+            </div>
+            <div className="form-group">
+              <label>User Message *</label>
+              <div className="input-with-helper">
+                <textarea
+                  placeholder="{{webhook.message.text}} hoặc câu hỏi cố định"
+                  value={formData.userMessage || ''}
+                  onChange={(e) => updateField('userMessage', e.target.value)}
+                  onFocus={() => setActiveField('userMessage')}
+                  rows={4}
+                />
+                {getPreviousNodes().length > 0 && (
+                  <button 
+                    type="button"
+                    className="helper-btn"
+                    onClick={() => openVariableHelper('userMessage')}
+                    title="Chèn biến"
+                  >
+                    📦
+                  </button>
+                )}
+              </div>
+              <small className="hint">Tin nhắn từ user: {`{{webhook.message.text}}`}</small>
+            </div>
+            <div className="form-group">
+              <label>Max Tokens</label>
+              <input
+                type="number"
+                placeholder="2048"
+                value={formData.maxTokens || 2048}
+                onChange={(e) => updateField('maxTokens', parseInt(e.target.value))}
+                min={1}
+                max={8000}
+              />
+              <small className="hint">Số token tối đa cho response</small>
+            </div>
+            <div className="form-group">
+              <label>Temperature</label>
+              <input
+                type="number"
+                step="0.1"
+                placeholder="0.7"
+                value={formData.temperature || 0.7}
+                onChange={(e) => updateField('temperature', parseFloat(e.target.value))}
+                min={0}
+                max={2}
+              />
+              <small className="hint">0 = chính xác, 1 = sáng tạo, 2 = rất ngẫu nhiên</small>
+            </div>
+
+            <div className="form-group">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={formData.useConversationHistory || false}
+                  onChange={(e) => updateField('useConversationHistory', e.target.checked)}
+                  style={{ marginRight: '8px' }}
+                />
+                Sử dụng Conversation History
+              </label>
+              <small className="hint">Groq sẽ nhớ lịch sử chat để trả lời có ngữ cảnh</small>
+            </div>
+
+            {formData.useConversationHistory && (
+              <div className="form-group">
+                <label>Chat ID *</label>
+                <div className="input-with-helper">
+                  <input
+                    type="text"
+                    placeholder="{{webhook.message.chat.id}}"
+                    value={formData.chatId || ''}
+                    onChange={(e) => updateField('chatId', e.target.value)}
+                    onFocus={() => setActiveField('chatId')}
+                  />
+                  {getPreviousNodes().length > 0 && (
+                    <button 
+                      type="button"
+                      className="helper-btn"
+                      onClick={() => openVariableHelper('chatId')}
+                      title="Chèn biến"
+                    >
+                      📦
+                    </button>
+                  )}
+                </div>
+                <small className="hint">ID để phân biệt từng cuộc hội thoại: {`{{webhook.message.chat.id}}`}</small>
+              </div>
+            )}
+
+            <div className="info-box">
+              <strong>⚡ Groq API - MIỄN PHÍ & CỰC NHANH</strong><br/>
+              14,400 requests/day | 30 RPM | Inference &lt; 1 giây<br/>
+              Output: {`{{groq-X.response}}`} - Phản hồi từ AI<br/>
+              {formData.useConversationHistory && (
+                <><br/><strong>💬 Conversation Memory:</strong> Groq sẽ nhớ lịch sử chat</>
+              )}
+            </div>
+          </>
+        )
+
       case 'googleSheets':
         return (
           <>
@@ -960,6 +1099,7 @@ export default function NodeConfigPanel({ node, nodes, edges, onClose, onSave }:
       telegram: '✈️ Cấu hình Telegram',
       chatgpt: '🤖 Cấu hình ChatGPT',
       gemini: '✨ Cấu hình Gemini AI',
+      groq: '⚡ Cấu hình Groq AI',
       contentFilter: '🛡️ Cấu hình Lọc Nội Dung',
       googleSheets: '📊 Cấu hình Google Sheets',
     }
@@ -980,9 +1120,9 @@ export default function NodeConfigPanel({ node, nodes, edges, onClose, onSave }:
             <div className="info-box variables-info">
               <strong>💡 Có thể sử dụng dữ liệu từ các node trước:</strong>
               <div className="quick-variables">
-                {getAvailableVariables().map(({ nodeId }) => (
+                {getAvailableVariables().map(({ nodeId, displayName }) => (
                   <span key={nodeId} className="quick-var-tag">
-                    {nodeId}
+                    {displayName}
                   </span>
                 ))}
               </div>
@@ -1006,10 +1146,10 @@ export default function NodeConfigPanel({ node, nodes, edges, onClose, onSave }:
                 {getAvailableVariables().length === 0 ? (
                   <p className="no-variables">Không có node nào kết nối trước node này</p>
                 ) : (
-                  getAvailableVariables().map(({ nodeId, nodeType, variables }) => (
+                  getAvailableVariables().map(({ nodeId, displayName, nodeType, variables }) => (
                     <div key={nodeId} className="variable-group">
                       <div className="variable-node-title">
-                        <strong>{nodeId}</strong> ({nodeType})
+                        <strong>{displayName}</strong> ({nodeType})
                       </div>
                       <div className="variable-items">
                         {variables.map(variable => (
@@ -1017,8 +1157,9 @@ export default function NodeConfigPanel({ node, nodes, edges, onClose, onSave }:
                             key={variable}
                             className="variable-item"
                             onClick={() => insertVariable(nodeId, variable)}
+                            title={`Click để chèn {{${nodeId}.${variable}}}`}
                           >
-                            {`{{${nodeId}.${variable}}}`}
+                            {`{{${displayName}.${variable}}}`}
                           </button>
                         ))}
                       </div>

@@ -8,6 +8,7 @@ import * as nodemailer from 'nodemailer';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 import { MongoClient, Db, ObjectId } from 'mongodb';
+import Groq from 'groq-sdk';
 
 // Load environment variables
 // Note: __dirname in dist/activities.js is hello-temporal/dist
@@ -528,10 +529,23 @@ export async function sendTelegramMessage(
     console.log(`[Telegram Activity] ✈️ Sending message to chat ${config.chatId}`);
     console.log(`[Telegram Activity] Text length: ${config.text.length} chars, Parse mode: ${config.parseMode || 'None'}`);
     
+    // Try to parse JSON response from Gemini (format: {"is_feedback": false, "response": "text"})
+    let messageText = config.text;
+    try {
+      const parsed = JSON.parse(config.text);
+      if (parsed.response) {
+        messageText = parsed.response;
+        console.log(`[Telegram Activity] 📝 Extracted response from JSON`);
+      }
+    } catch (e) {
+      // Not JSON, use original text
+      console.log(`[Telegram Activity] 📝 Using text as-is (not JSON)`);
+    }
+    
     const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
     const payload: any = {
       chat_id: config.chatId,
-      text: config.text,
+      text: messageText,
     };
     
     // Only add parse_mode if not 'None'
@@ -795,26 +809,63 @@ export async function callGemini(
     let rawResponse = response.data.candidates[0].content.parts[0].text;
     const tokensUsed = response.data.usageMetadata?.totalTokenCount || 0;
     
-    // Try to parse JSON response and extract "response" field
+    // ALWAYS extract clean text from response, removing JSON wrappers and markdown
     let aiResponse = rawResponse;
     let isFeedback = false;
     let feedbackData = null;
     
+    console.log(`[Gemini Activity] 📝 Raw response preview:`, rawResponse.substring(0, 300));
+    
     try {
-      // Remove markdown code blocks if present
-      const cleanJson = rawResponse.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      const parsed = JSON.parse(cleanJson);
+      // Step 1: Remove ALL markdown code blocks
+      let cleanText = rawResponse
+        .replace(/```json\s*/gi, '')
+        .replace(/```javascript\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
       
-      if (parsed.is_feedback === true) {
-        isFeedback = true;
-        feedbackData = parsed;
-        aiResponse = `Cảm ơn bạn đã đánh giá! 😊`;
-      } else if (parsed.response) {
-        aiResponse = parsed.response;
+      // Step 2: Try to extract JSON if present
+      const jsonMatch = cleanText.match(/\{[\s\S]*?\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          console.log(`[Gemini Activity] 🎯 Found JSON:`, {
+            is_feedback: parsed.is_feedback,
+            has_response: !!parsed.response
+          });
+          
+          // If it's a structured response with "response" field, extract it
+          if (parsed.is_feedback === true) {
+            isFeedback = true;
+            feedbackData = parsed;
+            aiResponse = `Cảm ơn bạn đã đánh giá! 😊`;
+            console.log(`[Gemini Activity] ⭐ Feedback detected`);
+          } else if (parsed.response) {
+            // Extract ONLY the response text
+            aiResponse = parsed.response;
+            console.log(`[Gemini Activity] ✅ Extracted response from JSON (${aiResponse.length} chars)`);
+          } else {
+            // JSON exists but no response field, use text before JSON
+            const textBeforeJson = cleanText.substring(0, cleanText.indexOf(jsonMatch[0])).trim();
+            if (textBeforeJson) {
+              aiResponse = textBeforeJson;
+              console.log(`[Gemini Activity] 📄 Using text before JSON (${aiResponse.length} chars)`);
+            }
+          }
+        } catch (parseError) {
+          // JSON-like structure but not valid JSON, use cleaned text
+          console.log(`[Gemini Activity] ⚠️ Invalid JSON, using cleaned text`);
+          aiResponse = cleanText;
+        }
+      } else {
+        // No JSON found, use cleaned text
+        aiResponse = cleanText;
+        console.log(`[Gemini Activity] 📝 No JSON found, using cleaned text (${aiResponse.length} chars)`);
       }
-    } catch (e) {
-      // Not JSON, use raw response as-is
-      console.log(`[Gemini Activity] Response is not JSON, using raw text`);
+    } catch (e: any) {
+      console.log(`[Gemini Activity] ❌ Error processing response:`, e.message);
+      console.log(`[Gemini Activity] Using raw response as fallback`);
+      aiResponse = rawResponse;
     }
     
     // Save assistant response to conversation history
@@ -837,12 +888,187 @@ export async function callGemini(
     
   } catch (error: any) {
     const duration = Date.now() - startTime;
-    console.error(`[Gemini Activity] ❌ Failed after ${duration}ms:`, {
-      message: error.message,
-      model: config.model,
-      errorData: error.response?.data,
-    });
+    
+    // LOG FULL ERROR DETAILS
+    console.error(`[Gemini Activity] ❌ Failed after ${duration}ms:`);
+    console.error(`[Gemini Activity] Error message: ${error.message}`);
+    console.error(`[Gemini Activity] Error code: ${error.code}`);
+    console.error(`[Gemini Activity] Response status: ${error.response?.status}`);
+    console.error(`[Gemini Activity] Response data:`, JSON.stringify(error.response?.data, null, 2));
+    console.error(`[Gemini Activity] API Key length: ${apiKey?.length || 0}`);
+    console.error(`[Gemini Activity] API Key first 10 chars: ${apiKey?.substring(0, 10)}`);
+    console.error(`[Gemini Activity] Model used: ${config.model}`);
+    
     throw new Error(`Gemini call failed: ${error.response?.data?.error?.message || error.message}`);
+  }
+}
+
+// ==================== GROQ AI ACTIVITY ====================
+export async function callGroq(
+  config: {
+    model: string;
+    systemPrompt: string;
+    userMessage: string;
+    maxTokens: number;
+    temperature: number;
+    chatId?: string;
+    useConversationHistory?: boolean;
+  },
+  context: ActivityContext
+): Promise<any> {
+  const startTime = Date.now();
+  const apiKey = process.env.GROQ_API_KEY;
+  
+  if (!apiKey) {
+    throw new Error('GROQ_API_KEY not configured in .env file');
+  }
+  
+  try {
+    // Send typing indicator if chatId is provided
+    if (config.chatId) {
+      await sendTelegramTyping(config.chatId);
+      
+      if (config.useConversationHistory) {
+        addToConversationHistory(config.chatId, 'user', config.userMessage);
+      }
+    }
+    
+    console.log(`[Groq Activity] ⚡ Calling Groq with model: ${config.model}`);
+    console.log(`[Groq Activity] User message length: ${config.userMessage.length} chars`);
+    
+    const groq = new Groq({ apiKey });
+    
+    // Build messages array
+    const messages: any[] = [
+      { role: 'system', content: config.systemPrompt }
+    ];
+    
+    // Add conversation history if enabled
+    if (config.chatId && config.useConversationHistory) {
+      const history = getConversationHistory(config.chatId, 10);
+      if (history.length > 0) {
+        console.log(`[Groq Activity] 💭 Using conversation history (${history.length} messages)`);
+        history.forEach(msg => {
+          messages.push({ role: msg.role, content: msg.content });
+        });
+      }
+    }
+    
+    // Add current user message
+    messages.push({ role: 'user', content: config.userMessage });
+    
+    // Map model names (Groq uses different naming)
+    const modelMap: Record<string, string> = {
+      'gemini-pro': 'llama-3.3-70b-versatile',
+      'gemini-2.5-flash': 'llama-3.3-70b-versatile',
+      'llama-3.3-70b': 'llama-3.3-70b-versatile',
+      'mixtral-8x7b': 'mixtral-8x7b-32768',
+      'gemma-7b': 'gemma2-9b-it',
+    };
+    const actualModel = modelMap[config.model] || 'llama-3.3-70b-versatile';
+    
+    // IMPORTANT: Add response_format for JSON output
+    const completionParams: any = {
+      model: actualModel,
+      messages,
+      temperature: config.temperature,
+      max_tokens: config.maxTokens,
+    };
+    
+    // Force JSON response if system prompt mentions JSON
+    if (config.systemPrompt.includes('JSON') || config.systemPrompt.includes('json')) {
+      completionParams.response_format = { type: 'json_object' };
+      console.log('[Groq Activity] 🔧 Forcing JSON response format');
+    }
+    
+    const completion = await groq.chat.completions.create(completionParams);
+    
+    const duration = Date.now() - startTime;
+    
+    if (!completion.choices || completion.choices.length === 0) {
+      throw new Error('Groq returned no choices');
+    }
+    
+    let rawResponse = completion.choices[0].message.content || '';
+    const tokensUsed = completion.usage?.total_tokens || 0;
+    
+    // Process response (same logic as Gemini)
+    let aiResponse = rawResponse;
+    let isFeedback = false;
+    let feedbackData = null;
+    
+    console.log(`[Groq Activity] 📝 Raw response preview:`, rawResponse.substring(0, 300));
+    
+    try {
+      let cleanText = rawResponse
+        .replace(/```json\s*/gi, '')
+        .replace(/```javascript\s*/gi, '')
+        .replace(/```\s*/g, '')
+        .trim();
+      
+      const jsonMatch = cleanText.match(/\{[\s\S]*?\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          console.log(`[Groq Activity] 🎯 Found JSON:`, {
+            is_feedback: parsed.is_feedback,
+            has_response: !!parsed.response
+          });
+          
+          if (parsed.is_feedback === true) {
+            isFeedback = true;
+            feedbackData = parsed;
+            // KEEP RAW JSON for Filter to match keyword
+            aiResponse = rawResponse; // Keep original JSON string
+            console.log(`[Groq Activity] ⭐ Feedback detected - keeping JSON for Filter`);
+          } else if (parsed.response) {
+            aiResponse = parsed.response;
+            console.log(`[Groq Activity] ✅ Extracted response from JSON (${aiResponse.length} chars)`);
+          } else {
+            const textBeforeJson = cleanText.substring(0, cleanText.indexOf(jsonMatch[0])).trim();
+            if (textBeforeJson) {
+              aiResponse = textBeforeJson;
+              console.log(`[Groq Activity] 📝 Using text before JSON (${aiResponse.length} chars)`);
+            }
+          }
+        } catch (e) {
+          console.log(`[Groq Activity] ❌ JSON parse failed, using cleaned text`);
+          aiResponse = cleanText;
+        }
+      } else {
+        aiResponse = cleanText;
+        console.log(`[Groq Activity] 📝 No JSON found, using cleaned text (${aiResponse.length} chars)`);
+      }
+    } catch (e: any) {
+      console.log(`[Groq Activity] ❌ Error processing response:`, e.message);
+      aiResponse = rawResponse;
+    }
+    
+    // Save to conversation history
+    if (config.chatId && config.useConversationHistory) {
+      addToConversationHistory(config.chatId, 'assistant', aiResponse);
+    }
+    
+    console.log(`[Groq Activity] ✅ Response received (${duration}ms - FAST! ⚡)`);
+    console.log(`[Groq Activity] Response length: ${aiResponse.length} chars, Tokens: ${tokensUsed}`);
+    
+    return {
+      response: aiResponse,
+      rawResponse: rawResponse,
+      isFeedback,
+      feedbackData,
+      model: actualModel,
+      tokens: tokensUsed,
+      finishReason: completion.choices[0].finish_reason || 'stop',
+    };
+    
+  } catch (error: any) {
+    const duration = Date.now() - startTime;
+    
+    console.error(`[Groq Activity] ❌ Failed after ${duration}ms:`);
+    console.error(`[Groq Activity] Error:`, error.message);
+    
+    throw new Error(`Groq call failed: ${error.message}`);
   }
 }
 
@@ -890,11 +1116,13 @@ export async function googleSheetsOperation(
     // For APPEND operation, use sheet name + range (fixed quirk)
     let fullRange;
     if (config.action === 'APPEND') {
-      // IMPORTANT: Google Sheets API requires sheet name for APPEND to work
-      fullRange = config.sheetName 
-        ? `${config.sheetName}!${config.range || 'A1'}`
-        : config.range || 'A1';
-      console.log(`[Google Sheets Activity] 📋 APPEND mode: Using range with sheet name`);
+      // CRITICAL: Google Sheets APPEND API does NOT accept sheet name prefix
+      // Must use ONLY column format: "A:F" not "Sheet1!A:F"
+      let appendRange = config.range || 'A1';
+      appendRange = appendRange.replace(/\d+/g, ''); // Remove all numbers: A1:F1 → A:F
+      
+      fullRange = appendRange; // NO sheet name for APPEND!
+      console.log(`[Google Sheets Activity] 📋 APPEND mode: Using column-only range WITHOUT sheet name`);
     } else {
       fullRange = config.sheetName 
         ? `${config.sheetName}!${config.range || 'A:Z'}`

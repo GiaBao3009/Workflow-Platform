@@ -24,6 +24,7 @@ import {
   TelegramNode,
   ChatGPTNode,
   GeminiNode,
+  GroqNode,
   ContentFilterNode,
   GoogleSheetsNode,
 } from './nodes/CustomNodes'
@@ -41,6 +42,7 @@ const nodeTypes = {
   telegram: TelegramNode,
   chatgpt: ChatGPTNode,
   gemini: GeminiNode,
+  groq: GroqNode,
   contentFilter: ContentFilterNode,
   googleSheets: GoogleSheetsNode,
 }
@@ -167,7 +169,7 @@ export default function WorkflowCanvas({ workflow }: WorkflowCanvasProps) {
   // Handle node click để mở config panel
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
     // Chỉ mở config panel cho custom nodes, không mở cho input/output nodes
-    if (['httpRequest', 'database', 'email', 'delay', 'conditional', 'telegram', 'chatgpt', 'gemini', 'contentFilter', 'googleSheets'].includes(node.type || '')) {
+    if (['httpRequest', 'database', 'email', 'delay', 'conditional', 'telegram', 'chatgpt', 'gemini', 'groq', 'contentFilter', 'googleSheets'].includes(node.type || '')) {
       setSelectedNode(node)
     }
   }, [])
@@ -453,6 +455,13 @@ export default function WorkflowCanvas({ workflow }: WorkflowCanvasProps) {
                 <div 
                   className="palette-item" 
                   draggable
+                  onDragStart={(e) => onDragStart(e, 'groq')}
+                >
+                  ⚡ Groq AI
+                </div>
+                <div 
+                  className="palette-item" 
+                  draggable
                   onDragStart={(e) => onDragStart(e, 'contentFilter')}
                 >
                   🔍 Lọc Nội Dung
@@ -482,6 +491,8 @@ export default function WorkflowCanvas({ workflow }: WorkflowCanvasProps) {
               onDrop={onDrop}
               onDragOver={onDragOver}
               nodeTypes={nodeTypes}
+              nodesDraggable={true}//=======//
+              onlyRenderVisibleElements={true}//=======//
               deleteKeyCode="Delete"
               multiSelectionKeyCode="Control"
               fitView

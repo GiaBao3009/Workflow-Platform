@@ -11,7 +11,7 @@ interface AuthModalProps {
   onRegister?: (name: string, email: string, password: string) => void
 }
 
-export default function AuthModal({ isOpen, onClose, onLogin, onRegister }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, onLogin: _onLogin, onRegister }: AuthModalProps) {
   const { user, isAuthenticated, logout, updateSettings } = useAuthStore()
   const [isSignUp, setIsSignUp] = useState(false)
   const [isForgotPassword, setIsForgotPassword] = useState(false)
@@ -111,10 +111,23 @@ export default function AuthModal({ isOpen, onClose, onLogin, onRegister }: Auth
         setIsSignUp(false)
         setFormData({ ...formData, name: '', confirmPassword: '' })
       } else {
-        onLogin?.(formData.email, formData.password)
-        // Demo: show success
-        alert('✅ Đăng nhập thành công!')
-        onClose()
+        // Đăng nhập local qua backend
+        const response = await fetch('http://localhost:3001/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: formData.email, password: formData.password })
+        })
+        const data = await response.json()
+        if (response.ok && data.token && data.user) {
+          // Lưu token vào localStorage
+          localStorage.setItem('auth_token', data.token)
+          // Cập nhật user vào store
+          window.location.reload() // reload để load lại user/role
+          alert('✅ Đăng nhập thành công!')
+          onClose()
+        } else {
+          setError(data.error || 'Email hoặc mật khẩu không đúng.')
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Có lỗi xảy ra')

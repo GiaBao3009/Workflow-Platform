@@ -15,6 +15,7 @@ export interface IUser extends Document {
   googleId?: string; // OAuth Google
   githubId?: string; // OAuth GitHub
   provider?: 'local' | 'google' | 'github'; // Auth provider
+  role?: 'user' | 'admin';
   isActive: boolean;
   organizationId?: string;
   resetPasswordToken?: string; // Token để reset password
@@ -56,6 +57,11 @@ const userSchema = new Schema<IUser>(
       type: String,
       enum: ['local', 'google', 'github'],
       default: 'local',
+    },
+    role: {
+      type: String,
+      enum: ['user', 'admin'],
+      default: 'user',
     },
     isActive: {
       type: Boolean,
@@ -594,3 +600,303 @@ webhookLogSchema.index({ webhookId: 1, createdAt: -1 });
 webhookLogSchema.index({ workflowId: 1, createdAt: -1 });
 
 export const WebhookLog = model<IWebhookLog>('WebhookLog', webhookLogSchema);
+
+// ==================== API KEYS COLLECTION ====================
+export interface IApiKey extends Document {
+  _id: string;
+  userId: Schema.Types.ObjectId;
+  service: 'gemini' | 'openai' | 'telegram' | 'google-sheets' | 'github' | 'slack' | 'discord';
+  keyName: string;
+  encryptedKey: string; // Encrypted API key
+  isGlobal: boolean; // true = admin global key, false = user key
+  isActive: boolean;
+  quotaUsed?: number;
+  quotaLimit?: number;
+  lastUsed?: Date;
+  expiresAt?: Date;
+  metadata?: Record<string, any>;
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+const apiKeySchema = new Schema<IApiKey>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    service: {
+      type: String,
+      enum: ['gemini', 'openai', 'telegram', 'google-sheets', 'github', 'slack', 'discord'],
+      required: true,
+    },
+    keyName: {
+      type: String,
+      required: true,
+    },
+    encryptedKey: {
+      type: String,
+      required: true,
+    },
+    isGlobal: {
+      type: Boolean,
+      default: false,
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
+    quotaUsed: {
+      type: Number,
+      default: 0,
+    },
+    quotaLimit: {
+      type: Number,
+    },
+    lastUsed: {
+      type: Date,
+    },
+    expiresAt: {
+      type: Date,
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+    },
+  },
+  { timestamps: true }
+);
+
+apiKeySchema.index({ userId: 1, service: 1 });
+apiKeySchema.index({ isGlobal: 1, service: 1 });
+
+export const ApiKey = model<IApiKey>('ApiKey', apiKeySchema);
+
+// ==================== AUDIT LOGS COLLECTION ====================
+export interface IAuditLog extends Document {
+  _id: string;
+  userId: Schema.Types.ObjectId;
+  userName?: string;
+  userEmail?: string;
+  action: string; // 'create', 'update', 'delete', 'login', 'logout', etc.
+  resourceType: string; // 'user', 'workflow', 'apikey', 'webhook', etc.
+  resourceId?: string;
+  resourceName?: string;
+  details?: Record<string, any>;
+  ipAddress?: string;
+  userAgent?: string;
+  status: 'success' | 'failed';
+  errorMessage?: string;
+  createdAt: Date;
+}
+
+const auditLogSchema = new Schema<IAuditLog>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    userName: String,
+    userEmail: String,
+    action: {
+      type: String,
+      required: true,
+    },
+    resourceType: {
+      type: String,
+      required: true,
+    },
+    resourceId: {
+      type: String,
+    },
+    resourceName: {
+      type: String,
+    },
+    details: {
+      type: Schema.Types.Mixed,
+    },
+    ipAddress: {
+      type: String,
+    },
+    userAgent: {
+      type: String,
+    },
+    status: {
+      type: String,
+      enum: ['success', 'failed'],
+      default: 'success',
+    },
+    errorMessage: {
+      type: String,
+    },
+  },
+  { timestamps: true }
+);
+
+auditLogSchema.index({ userId: 1, createdAt: -1 });
+auditLogSchema.index({ action: 1, createdAt: -1 });
+auditLogSchema.index({ resourceType: 1, resourceId: 1 });
+auditLogSchema.index({ createdAt: -1 });
+
+export const AuditLog = model<IAuditLog>('AuditLog', auditLogSchema);
+
+// ==================== RATE LIMITS COLLECTION ====================
+export interface IRateLimit extends Document {
+  _id: string;
+  userId: Schema.Types.ObjectId;
+  limitType: 'workflows' | 'executions_daily' | 'webhook_calls' | 'api_calls';
+  limit: number;
+  currentUsage: number;
+  resetAt: Date;
+  isCustom: boolean; // true = custom limit for user, false = default
+  createdAt: Date;
+  updatedAt?: Date;
+}
+
+const rateLimitSchema = new Schema<IRateLimit>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    limitType: {
+      type: String,
+      enum: ['workflows', 'executions_daily', 'webhook_calls', 'api_calls'],
+      required: true,
+    },
+    limit: {
+      type: Number,
+      required: true,
+    },
+    currentUsage: {
+      type: Number,
+      default: 0,
+    },
+    resetAt: {
+      type: Date,
+      required: true,
+    },
+    isCustom: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { timestamps: true }
+);
+
+rateLimitSchema.index({ userId: 1, limitType: 1 }, { unique: true });
+rateLimitSchema.index({ resetAt: 1 });
+
+export const RateLimit = model<IRateLimit>('RateLimit', rateLimitSchema);
+
+// ==================== NOTIFICATIONS COLLECTION ====================
+export interface INotification extends Document {
+  _id: string;
+  type: 'critical' | 'warning' | 'info' | 'success';
+  title: string;
+  message: string;
+  source: string; // 'system', 'workflow', 'user', etc.
+  metadata?: Record<string, any>;
+  isRead: boolean;
+  readBy: string[];
+  createdAt: Date;
+  expiresAt?: Date;
+}
+
+const notificationSchema = new Schema<INotification>(
+  {
+    type: {
+      type: String,
+      enum: ['critical', 'warning', 'info', 'success'],
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    message: {
+      type: String,
+      required: true,
+    },
+    source: {
+      type: String,
+      required: true,
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+    },
+    isRead: {
+      type: Boolean,
+      default: false,
+    },
+    readBy: [{
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    }],
+    expiresAt: {
+      type: Date,
+    },
+  },
+  { timestamps: true }
+);
+
+notificationSchema.index({ type: 1, isRead: 1, createdAt: -1 });
+notificationSchema.index({ createdAt: -1 });
+notificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
+
+export const Notification = model<INotification>('Notification', notificationSchema);
+
+// ==================== SYSTEM HEALTH COLLECTION ====================
+export interface ISystemHealth extends Document {
+  _id: string;
+  service: string; // 'temporal', 'mongodb', 'gemini', 'openai', etc.
+  status: 'healthy' | 'degraded' | 'down';
+  responseTime?: number; // ms
+  quotaUsed?: number;
+  quotaLimit?: number;
+  errorMessage?: string;
+  lastChecked: Date;
+  metadata?: Record<string, any>;
+}
+
+const systemHealthSchema = new Schema<ISystemHealth>(
+  {
+    service: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    status: {
+      type: String,
+      enum: ['healthy', 'degraded', 'down'],
+      required: true,
+    },
+    responseTime: {
+      type: Number,
+    },
+    quotaUsed: {
+      type: Number,
+    },
+    quotaLimit: {
+      type: Number,
+    },
+    errorMessage: {
+      type: String,
+    },
+    lastChecked: {
+      type: Date,
+      required: true,
+    },
+    metadata: {
+      type: Schema.Types.Mixed,
+    },
+  },
+  { timestamps: true }
+);
+
+systemHealthSchema.index({ service: 1 });
+systemHealthSchema.index({ status: 1 });
+
+export const SystemHealth = model<ISystemHealth>('SystemHealth', systemHealthSchema);

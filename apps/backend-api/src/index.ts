@@ -8,6 +8,9 @@ import * as path from 'path';
 import * as crypto from 'crypto';
 import passport from './auth/passport.config';
 import authRoutes from './auth/auth.routes';
+import adminRoutes from './routes/admin.routes';
+import adminRoutesPart2 from './routes/admin.routes.part2';
+import { logger } from './logger';
 
 // Load .env from project root
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
@@ -27,10 +30,14 @@ async function initTemporalClient() {
       address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
     });
     temporalClient = new Client({ connection });
-    console.log('✅ Connected to Temporal Server');
-  } catch (error) {
-    console.warn('⚠️ Temporal Server không khả dụng - workflows sẽ không thực thi được');
-    console.warn('💡 Bạn vẫn có thể sử dụng các chức năng khác của app');
+    logger.info('Connected to Temporal Server', {
+      address: process.env.TEMPORAL_ADDRESS || 'localhost:7233',
+    });
+  } catch (error: any) {
+    logger.warn('Temporal Server unavailable', {
+      error: error.message,
+      note: 'Workflows will not execute, but other features will work',
+    });
     // Không throw error để app vẫn chạy được
   }
 }
@@ -56,6 +63,10 @@ app.use((req, res, next) => {
 
 // Auth routes
 app.use('/api/auth', authRoutes);
+
+// Admin routes (protected with JWT authentication)
+app.use('/api/admin', passport.authenticate('jwt', { session: false }), adminRoutes);
+app.use('/api/admin', passport.authenticate('jwt', { session: false }), adminRoutesPart2);
 
 // In-memory storage (fallback if MongoDB fails)
 const workflows = new Map();
@@ -322,7 +333,10 @@ app.post('/api/workflows/:workflowId/publish', async (req: Request, res: Respons
 app.post('/api/workflows/:workflowId/execute', async (req: Request, res: Response) => {
   const { workflowId } = req.params;
   
-  console.log('📋 Execute request for workflow:', workflowId);
+  logger.info('Execute workflow request', {
+    workflowId,
+    userId: (req as any).user?.id,
+  });
   
   try {
     let workflow: any = null;
@@ -333,15 +347,21 @@ app.post('/api/workflows/:workflowId/execute', async (req: Request, res: Respons
       workflow = workflows.get(workflowId);
     }
     
-    console.log('📋 Workflow found:', !!workflow);
+    logger.debug('Workflow lookup result', {
+      workflowId,
+      found: !!workflow,
+    });
     
     if (!workflow) {
       return res.status(404).json({ error: 'Workflow not found' });
     }
     
-    console.log('📋 Workflow status:', workflow.status);
-    console.log('📋 Workflow nodes:', workflow.reactFlowData?.nodes?.length || 0);
-    console.log('📋 Workflow edges:', workflow.reactFlowData?.edges?.length || 0);
+    logger.debug('Workflow details', {
+      workflowId,
+      status: workflow.status,
+      nodeCount: workflow.reactFlowData?.nodes?.length || 0,
+      edgeCount: workflow.reactFlowData?.edges?.length || 0,
+    });
     
     if (workflow.status !== 'published') {
       return res.status(400).json({ error: 'Workflow must be published to execute' });
@@ -353,9 +373,11 @@ app.post('/api/workflows/:workflowId/execute', async (req: Request, res: Respons
       workflow.reactFlowData?.edges || []
     );
     
-    console.log('📋 Validation errors:', errors);
-    
     if (errors.length > 0) {
+      logger.warn('Workflow validation failed', {
+        workflowId,
+        errors,
+      });
       return res.status(400).json({
         error: 'Workflow validation failed',
         validationErrors: errors,
@@ -389,7 +411,11 @@ app.post('/api/workflows/:workflowId/execute', async (req: Request, res: Respons
           args: [workflowId, activities],
         });
         
-        console.log(`✅ Started Temporal workflow: ${temporalWorkflowId}`);
+        logger.info('Temporal workflow started', {
+          workflowId,
+          temporalWorkflowId,
+          activityCount: activities.length,
+        });
         
         // Save run to storage immediately với status RUNNING
         let savedRunId: string;
@@ -418,8 +444,12 @@ app.post('/api/workflows/:workflowId/execute', async (req: Request, res: Respons
                 executionDetails,
                 endTime: new Date(),
               }).then(() => {
-                console.log(`✅ Workflow ${temporalWorkflowId} completed successfully`);
-              }).catch(err => console.error('Error updating run status:', err));
+                logger.info('Workflow completed successfully', {
+                  workflowId,
+                  temporalWorkflowId,
+                  runId: savedRunId,
+                });
+              }).catch(err => logger.error('Failed to update run status', { error: err }));
             },
             (error) => {
               WorkflowRun.findByIdAndUpdate(savedRunId, {
@@ -428,8 +458,12 @@ app.post('/api/workflows/:workflowId/execute', async (req: Request, res: Respons
                 errorDetails: { message: error.message, stack: error.stack },
                 endTime: new Date(),
               }).then(() => {
-                console.log(`❌ Workflow ${temporalWorkflowId} failed: ${error.message}`);
-              }).catch(err => console.error('Error updating run status:', err));
+                logger.error('Workflow failed', {
+                  workflowId,
+                  temporalWorkflowId,
+                  error: error.message,
+                });
+              }).catch(err => logger.error('Failed to update run status', { error: err }));
             }
           );
           
@@ -1301,7 +1335,7 @@ app.post('/webhooks/:apiKey', async (req: Request, res: Response) => {
         }
       }
 
-      // Rate limiting
+      // Rate limiting //=======//
       const now = Date.now();
       const rateLimitKey = apiKey;
       const rateLimit = rateLimitMap.get(rateLimitKey);
@@ -1407,8 +1441,19 @@ app.post('/webhooks/:apiKey', async (req: Request, res: Response) => {
       }
 
       // Convert workflow to Temporal activities
-      const nodes = workflow.reactFlowData?.nodes || [];
-      const edges = workflow.reactFlowData?.edges || [];
+      // Parse reactFlowData if it's a string
+      let reactFlowData = workflow.reactFlowData;
+      if (typeof reactFlowData === 'string') {
+        try {
+          reactFlowData = JSON.parse(reactFlowData);
+        } catch (e) {
+          console.error('Failed to parse reactFlowData:', e);
+          reactFlowData = { nodes: [], edges: [] };
+        }
+      }
+      
+      const nodes = reactFlowData?.nodes || [];
+      const edges = reactFlowData?.edges || [];
       
       // 🔍 Debug: Kiểm tra edges có sourceHandle không
       console.log(`\n🔍 Workflow edges (${edges.length} total):`);

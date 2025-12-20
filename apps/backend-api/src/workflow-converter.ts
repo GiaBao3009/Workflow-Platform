@@ -37,12 +37,28 @@ function evaluateTemplate(
     // Try exact match first
     let nodeResult = previousResults[nodeId];
     
-    // If not found, try to find by prefix (e.g., "gemini-1" matches "gemini-1764521667996")
+    // If not found, try to find by prefix (e.g., "groq-1" matches "groq-1766121668091")
     if (!nodeResult) {
+      // Try exact match with dash at end
       const matchingKey = Object.keys(previousResults).find(key => key.startsWith(nodeId + '-'));
       if (matchingKey) {
         nodeResult = previousResults[matchingKey];
         console.log(`[Converter] 🔍 Found node by prefix: ${nodeId} -> ${matchingKey}`);
+      } else {
+        // Try matching where nodeId is the start and is followed by a timestamp
+        // e.g., "groq-1" should match "groq-1766121668091"
+        const parts = nodeId.split('-');
+        if (parts.length >= 2) {
+          const pattern = parts.join('-'); // Reconstruct pattern
+          const matchingKeys = Object.keys(previousResults).filter(key => {
+            // Check if key starts with pattern and has more digits after
+            return key.startsWith(pattern) && /^\d+$/.test(key.substring(pattern.length));
+          });
+          if (matchingKeys.length > 0) {
+            nodeResult = previousResults[matchingKeys[0]];
+            console.log(`[Converter] 🔍 Found node by pattern: ${nodeId} -> ${matchingKeys[0]}`);
+          }
+        }
       }
     }
     
@@ -385,6 +401,42 @@ function convertNodeToActivity(
         order,
         config,
       };
+
+    case 'static':
+      // Static response node - returns fixed value
+      config = {
+        response: data.config?.response || data.response || '{}',
+      };
+      
+      return {
+        nodeId: node.id,
+        activityName: `STATIC_${node.id}`,
+        nodeType: 'STATIC',
+        order,
+        config,
+      };
+
+    case 'groq':
+      // Groq AI - same interface as Gemini
+      const groqChatId = previousResults?.webhook?.message?.chat?.id || null;
+      
+      config = {
+        model: data.model || 'llama-3.3-70b',
+        systemPrompt: data.systemPrompt || 'Bạn là trợ lý AI thân thiện.',
+        userMessage: data.userMessage || '{{webhook.message.text}}',
+        maxTokens: parseInt(data.maxTokens || '2048'),
+        temperature: parseFloat(data.temperature || '0.7'),
+        chatId: groqChatId,
+        useConversationHistory: true,
+      };
+      
+      return {
+        nodeId: node.id,
+        activityName: `GROQ_${node.id}`,
+        nodeType: 'GROQ',
+        order,
+        config,
+      };
       
     case 'contentFilter':
       // Parse keywords from textarea (one per line)
@@ -549,6 +601,20 @@ export function validateWorkflow(nodes: Node[], edges: Edge[]): string[] {
         const geminiTemperature = parseFloat(data.temperature || '0.7');
         if (geminiTemperature < 0 || geminiTemperature > 2) {
           errors.push(`Gemini node temperature phải từ 0-2`);
+        }
+        break;
+
+      case 'groq':
+        if (!data.userMessage) {
+          errors.push(`Groq node thiếu user message`);
+        }
+        const groqMaxTokens = parseInt(data.maxTokens || '2048');
+        if (groqMaxTokens < 1 || groqMaxTokens > 8000) {
+          errors.push(`Groq node maxTokens phải từ 1-8000`);
+        }
+        const groqTemperature = parseFloat(data.temperature || '0.7');
+        if (groqTemperature < 0 || groqTemperature > 2) {
+          errors.push(`Groq node temperature phải từ 0-2`);
         }
         break;
         

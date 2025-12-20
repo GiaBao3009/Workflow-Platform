@@ -1,7 +1,7 @@
 // List available Gemini models
 const https = require('https');
 
-const apiKey = 'AIzaSyAJ4NVHcioKYpfxjF9UQ_kL41KsSvApd40';
+const apiKey = 'AIzaSyAj9-ovWVc1RZlXI8W73dSBrwCaEkn5asE';
 
 const options = {
   hostname: 'generativelanguage.googleapis.com',

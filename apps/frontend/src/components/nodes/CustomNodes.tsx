@@ -215,6 +215,32 @@ export const GeminiNode = memo(({ data, selected }: NodeProps) => {
   );
 });
 
+export const GroqNode = memo(({ data, selected }: NodeProps) => {
+  return (
+    <div className={`custom-node groq-node ${selected ? 'selected' : ''}`}>
+      <Handle type="target" position={Position.Top} />
+      <div className="node-header">
+        <span className="node-icon">⚡</span>
+        <span className="node-title">Groq AI</span>
+      </div>
+      <div className="node-body">
+        <div className="node-field">
+          <strong>Model:</strong> {data.model || 'llama-3.3-70b'}
+        </div>
+        <div className="node-field">
+          <strong>Prompt:</strong> {data.userMessage ? '✓' : 'Chưa cấu hình'}
+        </div>
+        {data.systemPrompt && (
+          <div className="node-field">
+            <strong>System:</strong> ✓
+          </div>
+        )}
+      </div>
+      <Handle type="source" position={Position.Bottom} />
+    </div>
+  );
+});
+
 export const ContentFilterNode = memo(({ data, selected }: NodeProps) => {
   return (
     <div className={`custom-node filter-node ${selected ? 'selected' : ''}`}>

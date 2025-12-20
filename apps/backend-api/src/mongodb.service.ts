@@ -5,10 +5,39 @@
 
 import mongoose from 'mongoose';
 
+// Structured logger with JSON output
 const logger = {
-  info: (message: string, ...args: any[]) => console.log(`[INFO] ${message}`, ...args),
-  warn: (message: string, ...args: any[]) => console.warn(`[WARN] ${message}`, ...args),
-  error: (message: string, ...args: any[]) => console.error(`[ERROR] ${message}`, ...args),
+  info: (message: string, meta?: any) => {
+    const log = {
+      timestamp: new Date().toISOString(),
+      level: 'INFO',
+      service: 'mongodb-service',
+      message,
+      ...meta,
+    };
+    console.log(JSON.stringify(log));
+  },
+  warn: (message: string, meta?: any) => {
+    const log = {
+      timestamp: new Date().toISOString(),
+      level: 'WARN',
+      service: 'mongodb-service',
+      message,
+      ...meta,
+    };
+    console.warn(JSON.stringify(log));
+  },
+  error: (message: string, meta?: any) => {
+    const log = {
+      timestamp: new Date().toISOString(),
+      level: 'ERROR',
+      service: 'mongodb-service',
+      message,
+      ...meta,
+      stack: meta?.error?.stack || meta?.stack,
+    };
+    console.error(JSON.stringify(log));
+  },
 };
 
 interface MongoDBConfig {
@@ -33,12 +62,12 @@ class MongoDBService {
 
   async connect(config: MongoDBConfig): Promise<void> {
     if (this.isConnected) {
-      logger.info('MongoDB đã được kết nối');
+      logger.info('MongoDB already connected');
       return;
     }
 
     try {
-      logger.info(`Đang kết nối tới MongoDB: ${config.uri}`);
+      logger.info('Connecting to MongoDB', { uri: config.uri.replace(/:[^:]*@/, ':***@') });
 
       await mongoose.connect(config.uri, {
         dbName: config.dbName,
@@ -49,20 +78,23 @@ class MongoDBService {
       });
 
       this.isConnected = true;
-      logger.info('✅ Kết nối MongoDB Atlas thành công');
+      logger.info('MongoDB connected successfully', {
+        dbName: config.dbName,
+        maxPoolSize: config.maxPoolSize,
+      });
 
       // Xử lý sự kiện disconnect
       mongoose.connection.on('disconnected', () => {
-        logger.warn('⚠️ MongoDB bị ngắt kết nối');
+        logger.warn('MongoDB disconnected');
         this.isConnected = false;
       });
 
       mongoose.connection.on('error', (error) => {
-        logger.error('❌ MongoDB Connection Error:', error);
+        logger.error('MongoDB connection error', { error: error.message, stack: error.stack });
         this.isConnected = false;
       });
-    } catch (error) {
-      logger.error('❌ Lỗi kết nối MongoDB:', error);
+    } catch (error: any) {
+      logger.error('Failed to connect MongoDB', { error: error.message, stack: error.stack });
       throw error;
     }
   }
@@ -73,9 +105,9 @@ class MongoDBService {
     try {
       await mongoose.disconnect();
       this.isConnected = false;
-      logger.info('✅ Đã ngắt kết nối MongoDB');
-    } catch (error) {
-      logger.error('❌ Lỗi khi ngắt kết nối MongoDB:', error);
+      logger.info('MongoDB disconnected');
+    } catch (error: any) {
+      logger.error('Failed to disconnect MongoDB', { error: error.message });
       throw error;
     }
   }

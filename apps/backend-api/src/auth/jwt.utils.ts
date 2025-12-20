@@ -13,6 +13,7 @@ export interface IJWTPayload {
   userId: string;
   email: string;
   name?: string;
+  role?: 'user' | 'admin';
 }
 
 /**
@@ -23,6 +24,7 @@ export function generateToken(user: IUser): string {
     userId: user._id,
     email: user.email,
     name: user.name,
+    role: (user as any).role,
   };
 
   return jwt.sign(payload, JWT_SECRET, {
