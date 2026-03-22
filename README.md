@@ -1090,6 +1090,6 @@ Bạn đã có trong tay một **nền tảng workflow automation hoàn chỉnh*
 
 **Phiên bản:** 1.0  
 **Cập nhật:** Tháng 12/2025  
-**Tác giả:** Workflow Platform Team
+**Tác giả:** Baoldz3009
 
 **⭐ Nếu thấy hữu ích, hãy cho repo một ngôi sao nhé!**
