@@ -7,6 +7,9 @@
 [![Temporal](https://img.shields.io/badge/Temporal-1.0-orange)](https://temporal.io/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-7.0-green)](https://www.mongodb.com/)
 
+Video demo(lưu ý chưa demo chức năng sheet):https://drive.google.com/file/d/147TMI39JgVFlPdHz8hmmhowtvwg0tWaH/view?usp=sharing
+Link Sheet:https://docs.google.com/spreadsheets/d/1EaoPKCV9LJld5v5VP9Kcm-06PbiQhoO7pUmTSZIZFxQ/edit?gid=0#gid=0
+
 ---
 
 ## 📋 Mục Lục
