@@ -1072,7 +1072,7 @@ export async function callGroq(
   }
 }
 
-// ==================== GOOGLE SHEETS ACTIVITY ====================
+// ==================== GOOGLE SHEETS ACTIVITY ===================================
 export async function googleSheetsOperation(
   config: {
     spreadsheetId: string;
@@ -1187,7 +1187,7 @@ export async function googleSheetsOperation(
           range: fullRange,
           valueInputOption: 'RAW',
           requestBody: {
-            values: config.values,
+            values: config.values,//=======//
           },
         });
         
