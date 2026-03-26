@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - main
+      - master  # <-- Đã sửa thành master theo đúng repo của bạn
   workflow_dispatch:
 
 jobs:
@@ -23,8 +23,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v7.0.0
         with:
-          context: .
-          file: ./Dockerfile
+          context: ./hello-temporal       # <-- Chỉ định Docker chạy trong thư mục này
+          file: ./hello-temporal/Dockerfile # <-- Chỉ đúng đường dẫn tới Dockerfile
           push: true
           tags: |
             baoldz/workflow-platform:latest
